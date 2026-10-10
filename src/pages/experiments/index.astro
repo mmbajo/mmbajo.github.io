@@ -1,0 +1,13 @@
+---
+import Base from '../../layouts/Base.astro';
+import RLDemo from '../../components/RLDemo.astro';
+---
+<Base title="Experiments — Mark Bajo" description="Small, playable experiments in reinforcement learning.">
+  <header class="page-intro"><p class="eyebrow">THE WORKBENCH</p><h1>Experiments</h1><p>Small worlds, learning agents, and ideas you can interact with.</p></header>
+  <section aria-labelledby="maze-title">
+    <div class="experiment-heading"><div><span class="eyebrow">01 / INTERACTIVE EXAMPLE</span><h2 id="maze-title">A tiny world for Q-learning</h2></div><span class="pill">Q-learning</span></div>
+    <p class="experiment-summary">Compare an untrained agent with a learned policy, change how much it explores, or navigate the maze yourself. Training happens when you start the demo.</p>
+    <RLDemo src="/demos/gridworld/" title="A tiny world for Q-learning" />
+    <p class="experiment-note"><a href="/writing/a-tiny-world-for-q-learning/">Read the explanation <span aria-hidden="true">→</span></a></p>
+  </section>
+</Base>

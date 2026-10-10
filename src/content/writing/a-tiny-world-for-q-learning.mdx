@@ -1,0 +1,55 @@
+---
+title: "A tiny world for Q-learning"
+description: "Watch an agent learn its way through a maze, change how much it explores, or take the controls yourself."
+date: 2026-10-10
+tags: [reinforcement-learning, q-learning]
+example: true
+---
+
+import RLDemo from '../../components/RLDemo.astro';
+
+A small maze is a useful place to make reinforcement learning tangible. The agent sees its position, chooses a direction, and receives a reward. With enough attempts, those small updates produce a useful policy.
+
+This is an introductory interactive example for the site. It uses tabular Q-learning and a fixed maze; it is not a benchmark result or a claim about generalization.
+
+## Try it
+
+Start the demo and press **Watch agent**. Compare the untrained policy with the checkpoints after 50 and 800 training episodes. Increase **exploration ε** to make the agent choose more random actions during playback.
+
+<RLDemo src="/demos/gridworld/" title="Q-learning in a tiny maze" description="Try the policy. Change exploration. Take the controls." />
+
+**Take control** lets you move with the arrow keys, WASD, or the on-screen buttons. The goal is the gold star in the bottom-right corner. Every move costs one point, including attempts to walk into walls. Reaching the goal gives 20 points instead of the usual step cost.
+
+## What the agent learns
+
+The agent keeps a table with one value for each position and action. That value estimates the discounted return from taking the action and then following a good policy.
+
+After a step, it updates the action it just took:
+
+```python
+target = reward if done else reward + gamma * max(Q[next_state])
+Q[state, action] += alpha * (target - Q[state, action])
+```
+
+The terminal case matters: after reaching the goal, there is no future reward to bootstrap from. During training, the agent sometimes acts randomly so it can discover paths it has not tried yet.
+
+| Setting | Value |
+| --- | --- |
+| Learning rate, α | 0.25 |
+| Discount factor, γ | 0.95 |
+| Training exploration, ε | 0.25 |
+| Training episodes | 800 |
+| Maximum steps per training episode | 160 |
+| Random seed | 42 |
+
+The demo trains these small tables in your browser when you open it. The policy selector chooses a saved table from that run. Changing the exploration slider affects **playback**, not the training run. Playback stops at the goal or after 120 steps.
+
+## Things to notice
+
+- **An untrained policy has no preference.** All its values begin at zero, so ties are broken randomly.
+- **Exploration can look like a mistake.** A trained agent with high ε will still take random actions. That does not mean its learned table has been erased.
+- **A solved maze is a narrow success.** The agent has learned this layout. A new maze would require a new table or a different representation.
+
+The example is intentionally small enough to inspect. The [environment and learning code](https://github.com/mmbajo/mmbajo.github.io/blob/main/public/demos/gridworld/model.js) is separate from the drawing and controls.
+
+For the underlying method, see the Q-learning discussion in Sutton and Barto’s [*Reinforcement Learning: An Introduction*](http://incompleteideas.net/book/the-book-2nd.html).

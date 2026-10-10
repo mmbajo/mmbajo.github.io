@@ -1,0 +1,29 @@
+---
+import Base from '../layouts/Base.astro';
+import RLDemo from '../components/RLDemo.astro';
+import PostList from '../components/PostList.astro';
+import { getPosts } from '../lib/posts';
+import { site } from '../config';
+const posts = await getPosts();
+---
+<Base>
+  <section class="intro">
+    <p class="eyebrow"><span class="status-dot" aria-hidden="true"></span> REINFORCEMENT LEARNING & EXPERIMENTS</p>
+    <h1>Learning by<br /><em>trying things.</em></h1>
+    <p class="intro-copy">I’m Mark. I work on reinforcement learning, and I’m curious about what happens when we apply it to just about anything.</p>
+    <p class="intro-copy">This is a place for notes, small experiments, and things you can play with.</p>
+    <div class="intro-links"><a href="/writing/">Read the notes <span aria-hidden="true">→</span></a><a href={site.github}>Find me on GitHub <span aria-hidden="true">↗</span></a></div>
+  </section>
+
+  <section class="home-experiment" aria-labelledby="experiment-heading">
+    <div class="section-line"><h2 id="experiment-heading">On the workbench</h2><a href="/experiments/">Experiments <span aria-hidden="true">→</span></a></div>
+    <div class="experiment-heading"><div><span class="eyebrow">01 / INTERACTIVE EXAMPLE</span><h3>A small world. A learned policy.</h3></div><span class="pill">Q-learning</span></div>
+    <RLDemo src="/demos/gridworld/" title="A tiny world for Q-learning" description="A little maze. An agent learning its way out. Your turn?" />
+    <p class="experiment-note">An introductory example of learning through trial and error. <a href="/writing/a-tiny-world-for-q-learning/">Read how it works <span aria-hidden="true">→</span></a></p>
+  </section>
+
+  <section class="latest-writing" aria-labelledby="writing-heading">
+    <div class="section-line"><h2 id="writing-heading">Recent writing</h2><a href="/writing/">All writing <span aria-hidden="true">→</span></a></div>
+    <PostList posts={posts.slice(0, 3)} />
+  </section>
+</Base>

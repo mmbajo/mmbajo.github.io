@@ -1,0 +1,85 @@
+---
+interface Props {
+  src: string;
+  title: string;
+  poster?: string;
+  posterAlt?: string;
+  description?: string;
+  height?: number;
+}
+const {
+  src, title,
+  poster = '/images/gridworld.svg',
+  posterAlt = `Preview of ${title}`,
+  description = 'Watch the agent, or take the controls yourself.',
+  height = 610,
+} = Astro.props;
+---
+<rl-demo data-src={src} data-title={title} style={`--demo-height: ${height}px`}>
+  <div class="demo-poster">
+    <img src={poster} alt={posterAlt} width="900" height="420" loading="lazy" />
+    <div class="demo-start-row">
+      <div><span class="demo-eyebrow">PLAYABLE EXAMPLE</span><p>{description}</p></div>
+      <button type="button" class="button" data-start hidden><span aria-hidden="true">▶</span> Run demo</button>
+      <p class="demo-js-notice" data-requires-js>Enable JavaScript to run this experiment.</p>
+    </div>
+  </div>
+  <div class="demo-frame" hidden></div>
+  <div class="demo-caption">
+    <span>{title}</span>
+    <div>
+      <button type="button" class="text-button" data-close hidden>Close demo</button>
+      <a href={src} target="_blank" rel="noopener">Open demo <span aria-hidden="true">↗</span></a>
+    </div>
+  </div>
+</rl-demo>
+
+<script>
+  class RLDemo extends HTMLElement {
+    connectedCallback() {
+      const start = this.querySelector<HTMLButtonElement>('[data-start]')!;
+      const close = this.querySelector<HTMLButtonElement>('[data-close]')!;
+      const poster = this.querySelector<HTMLElement>('.demo-poster')!;
+      const frame = this.querySelector<HTMLElement>('.demo-frame')!;
+      start.hidden = false;
+      this.querySelector<HTMLElement>('[data-requires-js]')!.hidden = true;
+      let iframe: HTMLIFrameElement | null = null;
+      const sendVisibility = (visible: boolean) => iframe?.contentWindow?.postMessage(
+        { type: 'demo:visibility', visible }, new URL(this.dataset.src!, location.href).origin,
+      );
+      const observer = new IntersectionObserver(([entry]) => sendVisibility(entry.isIntersecting), { threshold: 0.05 });
+      observer.observe(this);
+      const resize = (event: MessageEvent) => {
+        if (!iframe || event.source !== iframe.contentWindow || event.origin !== new URL(this.dataset.src!, location.href).origin) return;
+        if (event.data?.type === 'demo:resize' && Number.isFinite(event.data.height)) {
+          iframe.style.height = `${Math.max(240, Math.min(2000, event.data.height))}px`;
+        }
+      };
+      window.addEventListener('message', resize);
+      start.addEventListener('click', () => {
+        iframe = document.createElement('iframe');
+        iframe.src = this.dataset.src!;
+        iframe.title = this.dataset.title!;
+        iframe.allowFullscreen = true;
+        iframe.setAttribute('allow', 'fullscreen');
+        iframe.addEventListener('load', () => iframe?.focus());
+        frame.replaceChildren(iframe);
+        frame.hidden = false;
+        poster.hidden = true;
+        close.hidden = false;
+      });
+      close.addEventListener('click', () => {
+        frame.replaceChildren();
+        iframe = null;
+        frame.hidden = true;
+        poster.hidden = false;
+        close.hidden = true;
+        start.focus();
+      });
+      this.cleanup = () => { observer.disconnect(); window.removeEventListener('message', resize); };
+    }
+    cleanup?: () => void;
+    disconnectedCallback() { this.cleanup?.(); }
+  }
+  if (!customElements.get('rl-demo')) customElements.define('rl-demo', RLDemo);
+</script>

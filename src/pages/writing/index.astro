@@ -1,0 +1,11 @@
+---
+import Base from '../../layouts/Base.astro';
+import PostList from '../../components/PostList.astro';
+import { getPosts } from '../../lib/posts';
+const posts = await getPosts();
+---
+<Base title="Writing — Mark Bajo" description="Notes and interactive explanations about reinforcement learning.">
+  <header class="page-intro"><p class="eyebrow">THE NOTEBOOK</p><h1>Writing</h1><p>Notes, questions, and experiments in reinforcement learning.</p></header>
+  <PostList posts={posts} />
+  <p class="rss-note">Follow new posts with <a href="/rss.xml">RSS <span aria-hidden="true">↗</span></a>.</p>
+</Base>
