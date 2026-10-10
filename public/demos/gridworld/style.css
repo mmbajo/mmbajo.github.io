@@ -32,6 +32,7 @@ input[type="range"] { display: block; width: 100%; accent-color: var(--green); m
 .buttons { display: flex; gap: 8px; margin-top: 16px; }
 button { padding: 8px 13px; min-height: 36px; background: #f8faf3; border: 1px solid #cdd8c1; border-radius: 4px; color: var(--green); cursor: pointer; font-size: 11px; }
 button:hover { background: #e2ead8; }
+button:disabled, select:disabled, input:disabled { opacity: .55; cursor: wait; }
 button.primary { background: var(--green); color: #fff; border-color: var(--green); }
 button.primary:hover { background: #234637; }
 button[aria-pressed="true"] { box-shadow: inset 0 0 0 1px var(--green); background: #e2ead8; }

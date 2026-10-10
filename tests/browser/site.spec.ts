@@ -67,3 +67,19 @@ test('writing remains readable with JavaScript disabled', async ({ browser }) =>
   await expect(page.getByRole('button', { name: 'Run demo' })).toHaveCount(0);
   await context.close();
 });
+
+test('demo controls wait for the simulation code on a slow connection', async ({ page }) => {
+  let release: () => void = () => {};
+  const loaded = new Promise<void>((resolve) => { release = resolve; });
+  await page.route('**/demos/gridworld/model.js', async (route) => {
+    await loaded;
+    await route.continue();
+  });
+  await page.goto('/demos/gridworld/', { waitUntil: 'commit' });
+  const watch = page.getByRole('button', { name: 'Watch agent' });
+  await expect(watch).toBeDisabled();
+  await expect(page.getByRole('status', { name: 'Experiment status' })).toHaveText('Loading the experiment…');
+  release();
+  await watch.click();
+  await expect(page.getByRole('status', { name: 'Experiment status' })).toContainText('Goal reached', { timeout: 15000 });
+});

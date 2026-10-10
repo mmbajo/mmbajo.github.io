@@ -132,6 +132,8 @@ window.addEventListener('message', (event) => {
 });
 window.addEventListener('pagehide', stop);
 draw();
+document.querySelectorAll('button, select, input').forEach((control) => { control.disabled = false; });
+$('status').textContent = 'Ready. Watch the policy or find your own way through.';
 
 // Keep the embed tall enough for its controls on desktop and mobile.
 if (window.parent !== window) {
