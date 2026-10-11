@@ -7,18 +7,14 @@ export const site = {
   locale: 'en_US',
 };
 
-// TODO: replace REPLACE-ME with the address you want public, then rebuild.
 // The page never contains a plain `mailto:`; the parts are joined in the browser,
 // and readers without JavaScript still see "user at domain" in a readable form.
-const email = { user: 'REPLACE-ME', domain: 'example.com' };
+const email = { user: 'markarjaybajo', domain: 'gmail.com' };
 
-// TODO: fill in the profiles you want. Any entry still containing REPLACE-ME is
-// skipped everywhere, so unfinished links never ship.
-const profiles = [
-  { label: 'LinkedIn', url: 'https://www.linkedin.com/in/REPLACE-ME/' },
-  { label: 'X', url: 'https://x.com/REPLACE-ME' },
-  { label: 'Google Scholar', url: 'https://scholar.google.com/citations?user=REPLACE-ME' },
-];
+// Extra profiles beyond GitHub, which every page already links on its own.
+// Add entries as `{ label: 'LinkedIn', url: 'https://...' }`. Any entry still
+// containing REPLACE-ME is skipped everywhere, so unfinished links never ship.
+const profiles: { label: string; url: string }[] = [];
 
 const unset = (value: string) => value.includes('REPLACE-ME');
 
