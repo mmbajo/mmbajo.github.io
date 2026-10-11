@@ -1,4 +1,5 @@
 import { COLS, ROWS, START, GOAL, isWall, transition, chooseAction, trainCheckpoints, seededRandom } from './model.js';
+import { palettes } from './palette.js';
 
 const $ = (id) => document.getElementById(id);
 const canvas = $('world');
@@ -17,6 +18,7 @@ let path = [START];
 const cell = 80;
 
 function draw() {
+  const colors = palettes[document.documentElement.dataset.theme] || palettes.light;
   const dpr = Math.min(window.devicePixelRatio || 1, 2);
   canvas.width = COLS * cell * dpr;
   canvas.height = ROWS * cell * dpr;
@@ -25,14 +27,14 @@ function draw() {
   for (let s = 0; s < ROWS * COLS; s++) {
     const x = s % COLS * cell;
     const y = Math.floor(s / COLS) * cell;
-    ctx.fillStyle = isWall(s) ? '#a7b393' : s === GOAL ? '#eee0be' : '#e2e8d8';
+    ctx.fillStyle = isWall(s) ? colors.wall : s === GOAL ? colors.goal : colors.cell;
     ctx.beginPath(); ctx.roundRect(x + 3, y + 3, cell - 6, cell - 6, 7); ctx.fill();
     if (isWall(s)) {
-      ctx.fillStyle = '#93a17f';
+      ctx.fillStyle = colors.wallInner;
       ctx.beginPath(); ctx.roundRect(x + 13, y + 13, cell - 26, cell - 26, 4); ctx.fill();
     }
   }
-  ctx.lineWidth = 6; ctx.strokeStyle = '#7d9c68'; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  ctx.lineWidth = 6; ctx.strokeStyle = colors.path; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
   ctx.setLineDash([2, 11]); ctx.beginPath();
   path.forEach((s, i) => {
     const x = (s % COLS + .5) * cell;
@@ -42,11 +44,11 @@ function draw() {
   ctx.stroke(); ctx.setLineDash([]);
   const gx = (GOAL % COLS + .5) * cell;
   const gy = (Math.floor(GOAL / COLS) + .5) * cell;
-  ctx.fillStyle = '#b98539'; ctx.font = '32px Georgia'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('★', gx, gy + 1);
+  ctx.fillStyle = colors.star; ctx.font = '32px Georgia'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('★', gx, gy + 1);
   const x = (state % COLS + .5) * cell;
   const y = (Math.floor(state / COLS) + .5) * cell;
-  ctx.fillStyle = '#2e5948'; ctx.beginPath(); ctx.arc(x, y, 22, 0, Math.PI * 2); ctx.fill();
-  ctx.fillStyle = '#f4f7ec';
+  ctx.fillStyle = colors.agent; ctx.beginPath(); ctx.arc(x, y, 22, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = colors.eyes;
   ctx.beginPath(); ctx.arc(x - 7, y - 3, 3.5, 0, Math.PI * 2); ctx.arc(x + 7, y - 3, 3.5, 0, Math.PI * 2); ctx.fill();
   $('steps').textContent = String(steps);
   $('reward').textContent = String(reward);
@@ -131,6 +133,7 @@ window.addEventListener('message', (event) => {
   visible = event.data.visible === true; schedule();
 });
 window.addEventListener('pagehide', stop);
+window.addEventListener('themechange', draw);
 draw();
 document.querySelectorAll('button, select, input').forEach((control) => { control.disabled = false; });
 $('status').textContent = 'Ready. Watch the policy or find your own way through.';

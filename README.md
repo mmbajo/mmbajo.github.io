@@ -5,6 +5,7 @@ A small static Astro site for writing and playable reinforcement learning experi
 - Markdown and MDX posts, with draft support and an RSS feed.
 - A reusable `RLDemo` component that loads an iframe only after **Run demo** is clicked.
 - A complete example: tabular Q-learning in a maze, with policy checkpoints, exploration, keyboard/touch controls, and fullscreen.
+- A light/dark toggle that starts with the reader's system theme and remembers their choice locally. The preview, code blocks, and running demo follow the selected theme.
 - System fonts and local assets. No React runtime, external fonts, analytics, database, or application server.
 
 ## Run locally
@@ -25,7 +26,7 @@ npm run build
 npm run preview
 ```
 
-The browser tests check lazy loading, agent playback, keyboard/touch controls, mobile layout, routes, feeds, and reading without JavaScript:
+The browser tests check lazy loading, agent playback, keyboard/touch controls, mobile layout, theme persistence and demo synchronization, routes, feeds, and reading without JavaScript:
 
 ```sh
 npx playwright install chromium
@@ -69,6 +70,8 @@ import RLDemo from '../../components/RLDemo.astro';
 ```
 
 The wrapper keeps the experiment unloaded until clicked. **Close demo** removes the iframe entirely. To pause an experiment when it scrolls offscreen, handle the same-origin message `{ type: 'demo:visibility', visible: boolean }` as the example does in `public/demos/gridworld/app.js`. Validate both `event.origin` and `event.source`. Also pause on `document.visibilitychange`. For automatic iframe sizing, send `{ type: 'demo:resize', height }` from a `ResizeObserver` on your demo's main container; the wrapper validates its source and bounds the height.
+
+For matching light/dark themes, include `<script src="/theme.js"></script>` in your demo's `<head>`, style `[data-theme="dark"]`, and listen for `window`'s `themechange` event to repaint a canvas. The wrapper sends `{ type: 'site:theme', theme: 'light' | 'dark' }`; the shared script validates and handles it. SVG posters can use `@media (prefers-color-scheme: dark)` to follow the embedding page's color scheme, as the bundled preview does.
 
 The bundled example uses plain JavaScript and trains with a fixed seed after opening. A Python environment or PyTorch checkpoint must be ported/exported before it can run in the browser. C/Rust WebAssembly demos can use the same wrapper. Start with a single-threaded build; pthreads/SharedArrayBuffer need appropriate hosting headers.
 

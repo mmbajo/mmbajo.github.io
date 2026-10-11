@@ -1,7 +1,16 @@
-:root { color-scheme: light; --ink: #293d2e; --muted: #62745c; --green: #2e5948; }
+:root {
+  color-scheme: light; --ink: #293d2e; --muted: #62745c; --green: #2e5948;
+  --background: #f0f2e9; --line: #d6dfcc; --control-line: #cdd8c1; --control: #f8faf3; --hover: #e2ead8;
+  --button-ink: #fff; --button-hover: #234637; --status: #445b3d; --wall: #a7b393; --goal: #cb9950;
+}
+:root[data-theme="dark"] {
+  color-scheme: dark; --ink: #e4e8df; --muted: #acbf9f; --green: #9bc3a6;
+  --background: #20291f; --line: #3c4936; --control-line: #56694b; --control: #273323; --hover: #35452e;
+  --button-ink: #162c20; --button-hover: #b2d4ba; --status: #b9c9ae; --wall: #536448; --goal: #d5ad67;
+}
 * { box-sizing: border-box; }
 [hidden] { display: none !important; }
-body { margin: 0; background: #f0f2e9; color: var(--ink); font: 13px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+body { margin: 0; background: var(--background); color: var(--ink); font: 13px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
 button, select, input { font: inherit; }
 a { color: var(--green); text-underline-offset: 3px; }
 .playground { max-width: 790px; margin: auto; padding: 20px 24px 14px; }
@@ -19,25 +28,25 @@ canvas { display: block; width: 100%; height: auto; aspect-ratio: 9 / 6; border-
 .legend { display: flex; align-items: center; justify-content: center; gap: 16px; margin: 12px 0 18px; color: var(--muted); font: 10px ui-monospace, monospace; }
 .legend > span { display: flex; align-items: center; gap: 5px; }
 .legend i { display: inline-block; width: 7px; height: 7px; border-radius: 2px; }
-.agent-dot { background: #2e5948; border-radius: 50% !important; }
-.goal-dot { background: #cb9950; }
-.wall-dot { background: #a7b393; }
-.controls { display: flex; gap: 24px; align-items: end; padding-top: 14px; border-top: 1px solid #d6dfcc; }
+.agent-dot { background: var(--green); border-radius: 50% !important; }
+.goal-dot { background: var(--goal); }
+.wall-dot { background: var(--wall); }
+.controls { display: flex; gap: 24px; align-items: end; padding-top: 14px; border-top: 1px solid var(--line); }
 .controls label { color: var(--muted); font-size: 11px; }
 .select-label { flex: 1; }
-select { display: block; width: 100%; padding: 8px 24px 8px 9px; border: 1px solid #cdd8c1; border-radius: 4px; background: #fafbf6; color: var(--ink); font-size: 11px; margin-top: 6px; }
+select { display: block; width: 100%; padding: 8px 24px 8px 9px; border: 1px solid var(--control-line); border-radius: 4px; background: var(--control); color: var(--ink); font-size: 11px; margin-top: 6px; }
 .explore-label { flex: 1; }
 output { float: right; font: 11px ui-monospace, monospace; }
 input[type="range"] { display: block; width: 100%; accent-color: var(--green); margin: 8px 0; }
 .buttons { display: flex; gap: 8px; margin-top: 16px; }
-button { padding: 8px 13px; min-height: 36px; background: #f8faf3; border: 1px solid #cdd8c1; border-radius: 4px; color: var(--green); cursor: pointer; font-size: 11px; }
-button:hover { background: #e2ead8; }
+button { padding: 8px 13px; min-height: 36px; background: var(--control); border: 1px solid var(--control-line); border-radius: 4px; color: var(--green); cursor: pointer; font-size: 11px; }
+button:hover { background: var(--hover); }
 button:disabled, select:disabled, input:disabled { opacity: .55; cursor: wait; }
-button.primary { background: var(--green); color: #fff; border-color: var(--green); }
-button.primary:hover { background: #234637; }
-button[aria-pressed="true"] { box-shadow: inset 0 0 0 1px var(--green); background: #e2ead8; }
+button.primary { background: var(--green); color: var(--button-ink); border-color: var(--green); }
+button.primary:hover { background: var(--button-hover); }
+button[aria-pressed="true"] { box-shadow: inset 0 0 0 1px var(--green); background: var(--hover); }
 .icon-button { margin-left: auto; font-size: 17px; padding: 4px 11px; }
-.status { margin: 12px 0 0; font-size: 11px; color: #445b3d; min-height: 17px; }
+.status { margin: 12px 0 0; font-size: 11px; color: var(--status); min-height: 17px; }
 .hint { margin: 6px 0 0; font-size: 9px; color: var(--muted); }
 .direction-pad { display: flex; justify-content: center; gap: 9px; margin-top: 12px; }
 .direction-pad button { min-width: 43px; min-height: 40px; font-size: 18px; }

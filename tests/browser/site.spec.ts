@@ -83,3 +83,58 @@ test('demo controls wait for the simulation code on a slow connection', async ({
   await watch.click();
   await expect(page.getByRole('status', { name: 'Experiment status' })).toContainText('Goal reached', { timeout: 15000 });
 });
+
+test('theme follows the system until chosen, then persists across reloads and pages', async ({ page }) => {
+  await page.emulateMedia({ colorScheme: 'dark' });
+  await page.goto('/');
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+  await page.emulateMedia({ colorScheme: 'light' });
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
+  const toggle = page.getByRole('button', { name: 'Switch to dark mode' });
+  await toggle.focus();
+  await toggle.press('Enter');
+  await expect(page.getByRole('button', { name: 'Switch to light mode' })).toBeFocused();
+  await page.reload();
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+  await page.goto('/writing/a-tiny-world-for-q-learning/');
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+  await expect(page.locator('pre.astro-code')).toHaveCSS('background-color', 'rgb(36, 41, 46)');
+  await page.getByRole('button', { name: 'Switch to light mode' }).click();
+  await page.emulateMedia({ colorScheme: 'dark' });
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
+  await page.reload();
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
+});
+
+test('theme updates the open canvas without losing progress, including with storage blocked', async ({ page }) => {
+  await page.addInitScript(() => {
+    Object.defineProperty(window, 'localStorage', { get() { throw new DOMException('Storage blocked', 'SecurityError'); } });
+  });
+  const errors: string[] = [];
+  page.on('pageerror', (error) => errors.push(error.message));
+  await page.emulateMedia({ colorScheme: 'light' });
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Switch to dark mode' }).click();
+  await page.getByRole('button', { name: 'Run demo' }).click();
+  const demo = page.frameLocator('iframe');
+  await expect(demo.locator('html')).toHaveAttribute('data-theme', 'dark');
+  await demo.getByRole('button', { name: 'Take control' }).click();
+  await demo.getByRole('button', { name: 'Move down' }).click();
+  await expect(demo.locator('#steps')).toHaveText('1');
+  const canvas = demo.locator('canvas');
+  const darkImage = await canvas.evaluate((node) => (node as HTMLCanvasElement).toDataURL());
+  await page.getByRole('button', { name: 'Switch to light mode' }).click();
+  await expect(demo.locator('html')).toHaveAttribute('data-theme', 'light');
+  await expect(demo.locator('#steps')).toHaveText('1');
+  expect(await canvas.evaluate((node) => (node as HTMLCanvasElement).toDataURL())).not.toBe(darkImage);
+  expect(errors).toEqual([]);
+});
+
+test('theme toggle fits narrow mobile screens', async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 740 });
+  await page.emulateMedia({ colorScheme: 'light' });
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Switch to dark mode' }).click();
+  await expect(page.getByRole('button', { name: 'Switch to light mode' })).toBeInViewport();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBeTruthy();
+});

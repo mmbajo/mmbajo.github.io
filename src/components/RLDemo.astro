@@ -47,6 +47,10 @@ const {
       const sendVisibility = (visible: boolean) => iframe?.contentWindow?.postMessage(
         { type: 'demo:visibility', visible }, new URL(this.dataset.src!, location.href).origin,
       );
+      const sendTheme = () => iframe?.contentWindow?.postMessage(
+        { type: 'site:theme', theme: document.documentElement.dataset.theme }, new URL(this.dataset.src!, location.href).origin,
+      );
+      window.addEventListener('themechange', sendTheme);
       const observer = new IntersectionObserver(([entry]) => sendVisibility(entry.isIntersecting), { threshold: 0.05 });
       observer.observe(this);
       const resize = (event: MessageEvent) => {
@@ -62,7 +66,7 @@ const {
         iframe.title = this.dataset.title!;
         iframe.allowFullscreen = true;
         iframe.setAttribute('allow', 'fullscreen');
-        iframe.addEventListener('load', () => iframe?.focus());
+        iframe.addEventListener('load', () => { sendTheme(); iframe?.focus(); });
         frame.replaceChildren(iframe);
         frame.hidden = false;
         poster.hidden = true;
@@ -76,7 +80,11 @@ const {
         close.hidden = true;
         start.focus();
       });
-      this.cleanup = () => { observer.disconnect(); window.removeEventListener('message', resize); };
+      this.cleanup = () => {
+        observer.disconnect();
+        window.removeEventListener('message', resize);
+        window.removeEventListener('themechange', sendTheme);
+      };
     }
     cleanup?: () => void;
     disconnectedCallback() { this.cleanup?.(); }
