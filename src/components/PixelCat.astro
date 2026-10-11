@@ -1,0 +1,37 @@
+---
+interface Props { cat: 'blue-large' | 'blue-medium' | 'tonkinese' }
+const { cat } = Astro.props;
+const cats = {
+  'blue-large': { label: 'Russian Blue · 6 kg', weight: 6, width: 38, height: 24, stride: 400, outline: '#414e61', coat: '#8d9caf', light: '#bac5d0', shade: '#6a7c94', points: '#6a7c94', eyes: '#bdd996' },
+  'blue-medium': { label: 'Russian Blue · 5 kg', weight: 5, width: 34, height: 22, stride: 340, outline: '#465466', coat: '#96a5b7', light: '#c0cbd5', shade: '#74869e', points: '#74869e', eyes: '#b7d78d' },
+  tonkinese: { label: 'Tonkinese · 3.5 kg', weight: 3.5, width: 30, height: 20, stride: 280, outline: '#514644', coat: '#d2bea1', light: '#ead8ba', shade: '#b19b82', points: '#796257', eyes: '#a7d9d0' },
+};
+const colors = cats[cat];
+const pointed = cat === 'tonkinese';
+---
+<svg class="pixel-cat" data-cat={cat} data-weight={colors.weight} width={colors.width} height={colors.height} viewBox="0 0 34 22" fill="none" shape-rendering="crispEdges" style={`--cat-stride: ${colors.stride}ms; --cat-half-stride: ${colors.stride / 2}ms`}>
+  <title>{colors.label}</title>
+  <g class="cat-pose">
+    <path fill={colors.outline} d="M1 4h3v6h3V8h13V5h1V2h4v3h3V3h3v3h1v9h-4v2H9v-2H6v-2H3v-2H1Z" />
+    <path fill={colors.coat} d="M8 9h13V6h2V3h1v4h5V4h1v4h1v6h-4v2H9v-2H8Z" />
+    <path fill={pointed ? colors.points : colors.coat} d="M2 5h1v6h4v2H5v-1H2Z" />
+    <path fill={colors.shade} d="M8 13h2v2h11v1H9v-2H8Z" />
+    {cat === 'blue-large' && <path fill={colors.coat} d="M10 15h12v2H10Z" />}
+    {pointed && <path fill={colors.points} d="M22 3h2v4h5V4h1v4h1v6h-4v1h-4v-3h-2V8h1Z" />}
+    <path fill={colors.light} d="M25 12h6v2h-4v2h-5v-1h3Z" />
+    <path fill={colors.light} d="M9 9h10v1H9Z" />
+    <path fill="#bd9296" d="M22 4h1v2h-1Zm7 1h1v2h-1Z" />
+    <path fill={colors.eyes} d="M27 8h3v2h-3Z" />
+    <path fill="#29323a" d="M29 8h1v2h-1Zm2 3h2v1h-2Z" />
+  </g>
+  <g class="cat-legs cat-legs-a">
+    <path fill={colors.outline} d="M10 15h3v4h-1v2H8v-2h2Zm15 0h3v3h3v3h-5v-3h-1Z" />
+    <path fill={colors.coat} d="M11 15h2v3h-2Zm15 0h2v3h-2Z" />
+    <path fill={colors.points} d="M8 19h4v1H8Zm19 0h3v1h-3Z" />
+  </g>
+  <g class="cat-legs cat-legs-b">
+    <path fill={colors.outline} d="M13 15h3v3h3v3h-5v-3h-1Zm11 0h3v4h-2v2h-4v-2h3Z" />
+    <path fill={colors.coat} d="M14 15h2v3h-2Zm11 0h2v3h-2Z" />
+    <path fill={colors.points} d="M15 19h3v1h-3Zm6 0h4v1h-4Z" />
+  </g>
+</svg>

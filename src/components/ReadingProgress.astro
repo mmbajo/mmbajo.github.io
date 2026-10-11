@@ -1,4 +1,5 @@
 ---
+import PixelCat from './PixelCat.astro';
 interface Props { article?: boolean }
 const { article = false } = Astro.props;
 ---
@@ -6,23 +7,9 @@ const { article = false } = Astro.props;
   <div class="progress-track">
     <div class="progress-fill"></div>
     <span class="progress-cat" aria-hidden="true">
-      <svg class="pixel-cat" width="34" height="22" viewBox="0 0 34 22" fill="none" shape-rendering="crispEdges">
-        <g class="cat-pose">
-          <path fill="#65452f" d="M1 4h3v6h3V8h13V5h1V2h4v3h3V3h3v3h1v9h-4v2H9v-2H6v-2H3v-2H1Z" />
-          <path fill="#dca468" d="M2 5h1v6h4v2H5v-1H2Zm6 4h13V6h2V3h1v4h5V4h1v4h1v6h-4v2H9v-2H8Z" />
-          <path fill="#f5d6a3" d="M24 11h7v3h-4v2h-6v-2h3Z" />
-          <path fill="#ad7647" d="M10 9h2v3h-2Zm5 0h2v3h-2Zm7-2h2v2h-2Z" />
-          <path fill="#332e29" d="M28 8h2v2h-2Zm3 3h2v1h-2Z" />
-        </g>
-        <g class="cat-legs cat-legs-a">
-          <path fill="#65452f" d="M10 15h3v4h-1v2H8v-2h2Zm15 0h3v3h3v3h-5v-3h-1Z" />
-          <path fill="#dca468" d="M11 15h2v3h-2Zm15 0h2v3h-2Z" />
-        </g>
-        <g class="cat-legs cat-legs-b">
-          <path fill="#65452f" d="M13 15h3v3h3v3h-5v-3h-1Zm11 0h3v4h-2v2h-4v-2h3Z" />
-          <path fill="#dca468" d="M14 15h2v3h-2Zm11 0h2v3h-2Z" />
-        </g>
-      </svg>
+      <PixelCat cat="blue-large" />
+      <PixelCat cat="blue-medium" />
+      <PixelCat cat="tonkinese" />
     </span>
   </div>
   {article && <div class="progress-caption" aria-hidden="true"><span>READING</span><span data-progress-percent>00%</span></div>}
@@ -38,6 +25,17 @@ const { article = false } = Astro.props;
     const content = progress.dataset.scope === 'article' ? document.querySelector<HTMLElement>('[data-reading-content]') : null;
     const links = [...document.querySelectorAll<HTMLAnchorElement>('[data-toc-link]')];
     const headings = links.map((link) => document.getElementById(decodeURIComponent(link.hash.slice(1))));
+    const pack = progress.querySelector<HTMLElement>('.progress-cat')!;
+    const cats = [...pack.querySelectorAll<SVGElement>('.pixel-cat')];
+    // Keep all three together; choose a fresh running order on each page load.
+    for (let i = cats.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [cats[i], cats[j]] = [cats[j], cats[i]];
+    }
+    cats.forEach((cat, index) => {
+      cat.style.setProperty('--cat-phase', `${index * -80}ms`);
+      pack.append(cat);
+    });
 
     const update = () => {
       queued = false;

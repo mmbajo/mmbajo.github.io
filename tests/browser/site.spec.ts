@@ -139,12 +139,16 @@ test('theme toggle fits narrow mobile screens', async ({ page }) => {
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBeTruthy();
 });
 
-test('article contents track section jumps and the cat reaches both ends of the progress bar', async ({ page }) => {
+test('article contents track section jumps and all three cats fit at both ends of the progress bar', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto('/blog/a-tiny-world-for-q-learning/');
   const progress = page.getByRole('progressbar', { name: 'Article reading progress' });
   const toc = page.getByRole('navigation', { name: 'In this article' });
   await expect(progress).toHaveAttribute('aria-valuenow', '0');
+  const cats = progress.locator('.pixel-cat');
+  await expect(cats).toHaveCount(3);
+  expect(await cats.evaluateAll((nodes) => nodes.map((node) => Number(node.getAttribute('data-weight'))).sort((a, b) => a - b))).toEqual([3.5, 5, 6]);
+  for (const cat of await cats.all()) await expect(cat).toBeInViewport();
   const link = toc.getByRole('link', { name: 'What the agent learns' });
   await link.click();
   await expect(link).toHaveAttribute('aria-current', 'location');
@@ -154,6 +158,7 @@ test('article contents track section jumps and the cat reaches both ends of the 
   await expect(progress).toHaveAttribute('aria-valuenow', '100');
   await expect(toc.locator('a').last()).toHaveAttribute('aria-current', 'location');
   await expect(progress.locator('.progress-cat')).toBeInViewport();
+  for (const cat of await cats.all()) await expect(cat).toBeInViewport();
   await expect(progress).toHaveAttribute('data-direction', 'right');
   await page.evaluate(() => window.scrollTo(0, 0));
   await expect(progress).toHaveAttribute('aria-valuenow', '0');
@@ -173,7 +178,7 @@ test('mobile contents collapse after navigation and reduced motion stops cat ani
   await toc.getByRole('link', { name: 'What the agent learns' }).click();
   await expect(toggle).toHaveAttribute('aria-expanded', 'false');
   await expect(page.locator('#what-the-agent-learns')).toBeInViewport();
-  await expect(page.locator('.cat-pose')).toHaveCSS('animation-name', 'none');
+  for (const pose of await page.locator('.cat-pose').all()) await expect(pose).toHaveCSS('animation-name', 'none');
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBeTruthy();
 });
 

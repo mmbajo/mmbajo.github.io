@@ -4,26 +4,44 @@ import RLDemo from '../components/RLDemo.astro';
 import PostList from '../components/PostList.astro';
 import { getPosts } from '../lib/posts';
 import { site } from '../config';
+import { experience, education } from '../data/career';
 const posts = await getPosts();
 ---
 <Base>
   <section class="intro" aria-labelledby="profile-name">
     <div class="profile-heading">
       <img class="profile-avatar" src="/images/avatar.png" alt="Mark Bajo’s GitHub avatar" width="80" height="80" fetchpriority="high" />
-      <div><p class="eyebrow">REINFORCEMENT LEARNING</p><h1 id="profile-name">Mark Bajo<span class="name-dot" aria-hidden="true">.</span></h1><p class="profile-handle">@mmbajo</p></div>
+      <div><p class="eyebrow">RESEARCH ENGINEER / RL</p><h1 id="profile-name">Mark Bajo<span class="name-dot" aria-hidden="true">.</span></h1><p class="profile-handle">@mmbajo</p></div>
     </div>
-    <p class="intro-copy">I work on reinforcement learning. I’m interested in applying it to just about anything.</p>
-    <p class="intro-copy">Notes, experiments, and things you can play with live here.</p>
+    <p class="intro-copy">I’m a research engineer working on post-training for agent capabilities, mainly through reinforcement learning.</p>
+    <p class="intro-copy">Previously, I built AI systems across vision, language, and speech. Here I share notes, experiments, and things you can play with.</p>
     <div class="intro-links"><a href={site.github}>GitHub <span aria-hidden="true">↗</span></a><a href="/rss.xml">RSS <span aria-hidden="true">↗</span></a></div>
   </section>
 
+  <section class="career-section" aria-labelledby="experience-heading">
+    <div class="section-line"><h2 id="experience-heading"><span class="section-number" aria-hidden="true">01</span> Experience</h2></div>
+    <ol class="career-timeline">
+      {experience.map((entry) => <li class="timeline-entry">
+        <p class="timeline-period">{entry.period}</p>
+        <div><h3>{entry.role}</h3><p class="timeline-company">{entry.company}</p><p class="timeline-description">{entry.description}</p></div>
+      </li>)}
+    </ol>
+  </section>
+
+  <section class="education-section" aria-labelledby="education-heading">
+    <div class="section-line"><h2 id="education-heading"><span class="section-number" aria-hidden="true">02</span> Education</h2></div>
+    <ol class="education-list">
+      {education.map((entry) => <li><h3>{entry.degree}</h3><p>{entry.institution}</p></li>)}
+    </ol>
+  </section>
+
   <section class="latest-writing" aria-labelledby="writing-heading">
-    <div class="section-line"><h2 id="writing-heading"><span class="section-number" aria-hidden="true">01</span> Blog</h2><a href="/blog/">All posts <span aria-hidden="true">→</span></a></div>
+    <div class="section-line"><h2 id="writing-heading"><span class="section-number" aria-hidden="true">03</span> Blog</h2><a href="/blog/">All posts <span aria-hidden="true">→</span></a></div>
     <PostList posts={posts.slice(0, 3)} />
   </section>
 
   <section class="home-experiment" aria-labelledby="experiment-heading">
-    <div class="section-line"><h2 id="experiment-heading"><span class="section-number" aria-hidden="true">02</span> Experiments</h2><a href="/experiments/">View all <span aria-hidden="true">→</span></a></div>
+    <div class="section-line"><h2 id="experiment-heading"><span class="section-number" aria-hidden="true">04</span> Experiments</h2><a href="/experiments/">View all <span aria-hidden="true">→</span></a></div>
     <div class="experiment-heading"><div><span class="eyebrow">INTERACTIVE EXAMPLE</span><h3>A tiny world for Q-learning</h3></div><span class="pill">Q-learning</span></div>
     <RLDemo src="/demos/gridworld/" title="A tiny world for Q-learning" description="Watch a policy learn its way around. Or take the controls." />
     <p class="experiment-note">An introductory example. <a href="/blog/a-tiny-world-for-q-learning/">Read the note <span aria-hidden="true">→</span></a></p>

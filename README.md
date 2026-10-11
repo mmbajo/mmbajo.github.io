@@ -7,7 +7,7 @@ A small static Astro site for writing and playable reinforcement learning experi
 - A complete example: tabular Q-learning in a maze, with policy checkpoints, exploration, keyboard/touch controls, and fullscreen.
 - A light/dark toggle that starts with the reader's system theme and remembers their choice locally. The preview, code blocks, and running demo follow the selected theme.
 - A monospace personal homepage with a local copy of the `mmbajo` GitHub avatar, and a blog at `/blog/`. Old `/writing/` links redirect to their new locations.
-- Blog posts have a sticky contents tree, active section tracking, and a pixel cat walking along the reading-progress bar. Mobile contents collapse; reduced-motion preferences disable the walking animation.
+- Blog posts have a sticky contents tree, active section tracking, and three pixel cats running along the reading-progress bar: two Russian Blues (6 kg and 5 kg) and a Tonkinese (3.5 kg). Their sizes and coats differ, their running order is shuffled on each page load, and reduced-motion preferences disable the animation.
 - System fonts and local assets. No React runtime, external fonts, analytics, database, or application server.
 
 ## Run locally
@@ -40,11 +40,13 @@ On macOS, tests use an installed Google Chrome when available. In CI, Playwright
 ## Personalize
 
 - `src/config.ts`: name, description, and GitHub links.
+- `src/data/career.ts`: concise experience and education. Employers are anonymous; education has no dates.
 - `src/pages/index.astro`: introduction and featured experiment.
 - `src/styles/global.css`: colors, typography, and layout.
 - `public/favicon.svg`: the small grid icon.
 - `public/images/avatar.png`: the GitHub profile image, saved locally to avoid a third-party image request. Replace it here after changing your GitHub avatar.
 - `src/components/ReadingProgress.astro` and `TableOfContents.astro`: the cat, reading progress, and automatic navigation generated from article headings.
+- `src/components/PixelCat.astro`: the three cats' pixel art, sizes, colors, and individual running cadence.
 
 The Q-learning article and demo are explicitly marked as an introductory example, not a claim about original research. Keep them, edit them, or replace them with your first experiment.
 
