@@ -8,7 +8,7 @@ export const experience = [
   },
   {
     period: '2024 — 2025',
-    role: 'Senior Generative AI Engineer / Technical Lead',
+    role: 'AI Engineer, Technical Lead',
     company: 'AI product company',
     description: 'Led speech and research teams building agent evaluations, Japanese post-training data, and RAG systems. Prototyped sub-2s speech responses and sped up transcription inference 10×.',
   },
