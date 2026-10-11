@@ -1,0 +1,35 @@
+---
+import ReadingProgress from './ReadingProgress.astro';
+interface Props { sections: { slug: string; text: string; depth: number }[] }
+const { sections } = Astro.props;
+---
+<aside class="article-sidebar">
+  <div class="article-sidebar-inner">
+    <div class="toc-heading"><p class="eyebrow">ON THIS PAGE</p><button type="button" class="toc-toggle" aria-expanded="true" aria-controls="article-toc" hidden>Contents <span aria-hidden="true">+</span></button></div>
+    <nav id="article-toc" class="article-contents" aria-label="In this article">
+      {sections.map((section) => <a data-toc-link class:list={{ 'toc-subheading': section.depth === 3 }} href={`#${section.slug}`}><span aria-hidden="true">└</span>{section.text}</a>)}
+    </nav>
+    <ReadingProgress article />
+  </div>
+</aside>
+
+<script>
+  const toggle = document.querySelector<HTMLButtonElement>('.toc-toggle');
+  const nav = document.querySelector<HTMLElement>('#article-toc');
+  if (toggle && nav) {
+    const mobile = window.matchMedia('(max-width: 900px)');
+    const setOpen = (open: boolean) => {
+      nav.hidden = !open;
+      toggle.setAttribute('aria-expanded', String(open));
+    };
+    const adapt = () => { toggle.hidden = !mobile.matches; setOpen(!mobile.matches); };
+    toggle.addEventListener('click', () => setOpen(nav.hidden));
+    nav.querySelectorAll<HTMLAnchorElement>('a').forEach((link) => {
+      const heading = document.getElementById(decodeURIComponent(link.hash.slice(1)));
+      heading?.setAttribute('tabindex', '-1');
+      link.addEventListener('click', () => { if (mobile.matches) setOpen(false); });
+    });
+    mobile.addEventListener('change', adapt);
+    adapt();
+  }
+</script>

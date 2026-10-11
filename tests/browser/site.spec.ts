@@ -6,7 +6,7 @@ test('demo assets only load on demand; agent playback, controls, and teardown wo
   page.on('request', (request) => { if (request.url().includes('/demos/')) demoRequests.push(request.url()); });
   page.on('pageerror', (error) => errors.push(error.message));
   await page.goto('/');
-  await expect(page.getByRole('heading', { name: 'Learning by trying things.' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Mark Bajo', exact: true })).toBeVisible();
   expect(demoRequests).toHaveLength(0);
   await expect(page.locator('iframe')).toHaveCount(0);
   await page.getByRole('button', { name: 'Run demo' }).click();
@@ -33,7 +33,7 @@ test('demo assets only load on demand; agent playback, controls, and teardown wo
 
 test('navigation, article, feeds, and not-found page are present', async ({ page, request }) => {
   await page.goto('/');
-  await page.getByRole('navigation', { name: 'Main navigation' }).getByRole('link', { name: 'Writing', exact: true }).click();
+  await page.getByRole('navigation', { name: 'Main navigation' }).getByRole('link', { name: 'Blog', exact: true }).click();
   await page.getByRole('link', { name: /A tiny world for Q-learning/ }).click();
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('A tiny world for Q-learning');
   await expect(page.getByRole('navigation', { name: 'In this article' })).toBeVisible();
@@ -61,7 +61,7 @@ test('mobile page and running demo fit the viewport with usable touch controls',
 test('writing remains readable with JavaScript disabled', async ({ browser }) => {
   const context = await browser.newContext({ javaScriptEnabled: false });
   const page = await context.newPage();
-  await page.goto('http://127.0.0.1:4321/writing/a-tiny-world-for-q-learning/');
+  await page.goto('http://127.0.0.1:4321/blog/a-tiny-world-for-q-learning/');
   await expect(page.getByRole('heading', { name: 'What the agent learns' })).toBeVisible();
   await expect(page.getByText('Enable JavaScript to run this experiment.')).toBeVisible();
   await expect(page.getByRole('button', { name: 'Run demo' })).toHaveCount(0);
@@ -96,7 +96,7 @@ test('theme follows the system until chosen, then persists across reloads and pa
   await expect(page.getByRole('button', { name: 'Switch to light mode' })).toBeFocused();
   await page.reload();
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
-  await page.goto('/writing/a-tiny-world-for-q-learning/');
+  await page.goto('/blog/a-tiny-world-for-q-learning/');
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
   await expect(page.locator('pre.astro-code')).toHaveCSS('background-color', 'rgb(36, 41, 46)');
   await page.getByRole('button', { name: 'Switch to light mode' }).click();
@@ -137,4 +137,54 @@ test('theme toggle fits narrow mobile screens', async ({ page }) => {
   await page.getByRole('button', { name: 'Switch to dark mode' }).click();
   await expect(page.getByRole('button', { name: 'Switch to light mode' })).toBeInViewport();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBeTruthy();
+});
+
+test('article contents track section jumps and the cat reaches both ends of the progress bar', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto('/blog/a-tiny-world-for-q-learning/');
+  const progress = page.getByRole('progressbar', { name: 'Article reading progress' });
+  const toc = page.getByRole('navigation', { name: 'In this article' });
+  await expect(progress).toHaveAttribute('aria-valuenow', '0');
+  const link = toc.getByRole('link', { name: 'What the agent learns' });
+  await link.click();
+  await expect(link).toHaveAttribute('aria-current', 'location');
+  await expect(page).toHaveURL(/#what-the-agent-learns$/);
+  await expect.poll(() => progress.getAttribute('aria-valuenow')).not.toBe('0');
+  await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+  await expect(progress).toHaveAttribute('aria-valuenow', '100');
+  await expect(toc.locator('a').last()).toHaveAttribute('aria-current', 'location');
+  await expect(progress.locator('.progress-cat')).toBeInViewport();
+  await expect(progress).toHaveAttribute('data-direction', 'right');
+  await page.evaluate(() => window.scrollTo(0, 0));
+  await expect(progress).toHaveAttribute('aria-valuenow', '0');
+  await expect(progress).toHaveAttribute('data-direction', 'left');
+  await expect(progress).not.toHaveClass(/is-walking/);
+});
+
+test('mobile contents collapse after navigation and reduced motion stops cat animation', async ({ page }) => {
+  await page.setViewportSize({ width: 375, height: 812 });
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.goto('/blog/a-tiny-world-for-q-learning/');
+  const toggle = page.getByRole('button', { name: 'Contents' });
+  const toc = page.getByRole('navigation', { name: 'In this article' });
+  await expect(toggle).toHaveAttribute('aria-expanded', 'false');
+  await toggle.click();
+  await expect(toc).toBeVisible();
+  await toc.getByRole('link', { name: 'What the agent learns' }).click();
+  await expect(toggle).toHaveAttribute('aria-expanded', 'false');
+  await expect(page.locator('#what-the-agent-learns')).toBeInViewport();
+  await expect(page.locator('.cat-pose')).toHaveCSS('animation-name', 'none');
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBeTruthy();
+});
+
+test('previous writing URLs lead to the blog and the homepage uses the GitHub avatar', async ({ page }) => {
+  await page.goto('/writing/a-tiny-world-for-q-learning/');
+  await expect(page).toHaveURL('/blog/a-tiny-world-for-q-learning/');
+  await page.goto('/writing/');
+  await expect(page).toHaveURL('/blog/');
+  await expect(page.getByRole('heading', { name: 'Blog', exact: true })).toBeVisible();
+  await page.goto('/');
+  const avatar = page.getByRole('img', { name: 'Mark Bajo’s GitHub avatar' });
+  await expect(avatar).toBeVisible();
+  expect(await avatar.evaluate((node) => (node as HTMLImageElement).naturalWidth)).toBeGreaterThan(0);
 });

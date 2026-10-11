@@ -7,23 +7,25 @@ import { site } from '../config';
 const posts = await getPosts();
 ---
 <Base>
-  <section class="intro">
-    <p class="eyebrow"><span class="status-dot" aria-hidden="true"></span> REINFORCEMENT LEARNING & EXPERIMENTS</p>
-    <h1>Learning by<br /><em>trying things.</em></h1>
-    <p class="intro-copy">I’m Mark. I work on reinforcement learning, and I’m curious about what happens when we apply it to just about anything.</p>
-    <p class="intro-copy">This is a place for notes, small experiments, and things you can play with.</p>
-    <div class="intro-links"><a href="/writing/">Read the notes <span aria-hidden="true">→</span></a><a href={site.github}>Find me on GitHub <span aria-hidden="true">↗</span></a></div>
-  </section>
-
-  <section class="home-experiment" aria-labelledby="experiment-heading">
-    <div class="section-line"><h2 id="experiment-heading">On the workbench</h2><a href="/experiments/">Experiments <span aria-hidden="true">→</span></a></div>
-    <div class="experiment-heading"><div><span class="eyebrow">01 / INTERACTIVE EXAMPLE</span><h3>A small world. A learned policy.</h3></div><span class="pill">Q-learning</span></div>
-    <RLDemo src="/demos/gridworld/" title="A tiny world for Q-learning" description="A little maze. An agent learning its way out. Your turn?" />
-    <p class="experiment-note">An introductory example of learning through trial and error. <a href="/writing/a-tiny-world-for-q-learning/">Read how it works <span aria-hidden="true">→</span></a></p>
+  <section class="intro" aria-labelledby="profile-name">
+    <div class="profile-heading">
+      <img class="profile-avatar" src="/images/avatar.png" alt="Mark Bajo’s GitHub avatar" width="80" height="80" fetchpriority="high" />
+      <div><p class="eyebrow">REINFORCEMENT LEARNING</p><h1 id="profile-name">Mark Bajo<span class="name-dot" aria-hidden="true">.</span></h1><p class="profile-handle">@mmbajo</p></div>
+    </div>
+    <p class="intro-copy">I work on reinforcement learning. I’m interested in applying it to just about anything.</p>
+    <p class="intro-copy">Notes, experiments, and things you can play with live here.</p>
+    <div class="intro-links"><a href={site.github}>GitHub <span aria-hidden="true">↗</span></a><a href="/rss.xml">RSS <span aria-hidden="true">↗</span></a></div>
   </section>
 
   <section class="latest-writing" aria-labelledby="writing-heading">
-    <div class="section-line"><h2 id="writing-heading">Recent writing</h2><a href="/writing/">All writing <span aria-hidden="true">→</span></a></div>
+    <div class="section-line"><h2 id="writing-heading"><span class="section-number" aria-hidden="true">01</span> Blog</h2><a href="/blog/">All posts <span aria-hidden="true">→</span></a></div>
     <PostList posts={posts.slice(0, 3)} />
+  </section>
+
+  <section class="home-experiment" aria-labelledby="experiment-heading">
+    <div class="section-line"><h2 id="experiment-heading"><span class="section-number" aria-hidden="true">02</span> Experiments</h2><a href="/experiments/">View all <span aria-hidden="true">→</span></a></div>
+    <div class="experiment-heading"><div><span class="eyebrow">INTERACTIVE EXAMPLE</span><h3>A tiny world for Q-learning</h3></div><span class="pill">Q-learning</span></div>
+    <RLDemo src="/demos/gridworld/" title="A tiny world for Q-learning" description="Watch a policy learn its way around. Or take the controls." />
+    <p class="experiment-note">An introductory example. <a href="/blog/a-tiny-world-for-q-learning/">Read the note <span aria-hidden="true">→</span></a></p>
   </section>
 </Base>

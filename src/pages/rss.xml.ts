@@ -6,14 +6,14 @@ import type { APIContext } from 'astro';
 export async function GET(context: APIContext) {
   const posts = await getPosts();
   return rss({
-    title: `${site.name} — Writing`,
+    title: `${site.name} — Blog`,
     description: site.description,
     site: context.site!,
     items: posts.map((post) => ({
       title: post.data.title,
       description: post.data.description,
       pubDate: post.data.date,
-      link: `/writing/${post.id}/`,
+      link: `/blog/${post.id}/`,
     })),
   });
 }

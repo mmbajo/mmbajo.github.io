@@ -6,6 +6,8 @@ A small static Astro site for writing and playable reinforcement learning experi
 - A reusable `RLDemo` component that loads an iframe only after **Run demo** is clicked.
 - A complete example: tabular Q-learning in a maze, with policy checkpoints, exploration, keyboard/touch controls, and fullscreen.
 - A light/dark toggle that starts with the reader's system theme and remembers their choice locally. The preview, code blocks, and running demo follow the selected theme.
+- A monospace personal homepage with a local copy of the `mmbajo` GitHub avatar, and a blog at `/blog/`. Old `/writing/` links redirect to their new locations.
+- Blog posts have a sticky contents tree, active section tracking, and a pixel cat walking along the reading-progress bar. Mobile contents collapse; reduced-motion preferences disable the walking animation.
 - System fonts and local assets. No React runtime, external fonts, analytics, database, or application server.
 
 ## Run locally
@@ -41,12 +43,14 @@ On macOS, tests use an installed Google Chrome when available. In CI, Playwright
 - `src/pages/index.astro`: introduction and featured experiment.
 - `src/styles/global.css`: colors, typography, and layout.
 - `public/favicon.svg`: the small grid icon.
+- `public/images/avatar.png`: the GitHub profile image, saved locally to avoid a third-party image request. Replace it here after changing your GitHub avatar.
+- `src/components/ReadingProgress.astro` and `TableOfContents.astro`: the cat, reading progress, and automatic navigation generated from article headings.
 
 The Q-learning article and demo are explicitly marked as an introductory example, not a claim about original research. Keep them, edit them, or replace them with your first experiment.
 
 ## Publish a post
 
-Copy `templates/post.mdx` into `src/content/writing/my-post.mdx`. Set the title, description, date, and tags. Set `draft: false` when it is ready. A post's filename becomes its URL, for example `/writing/my-post/`.
+Copy `templates/post.mdx` into `src/content/writing/my-post.mdx`. Set the title, description, date, and tags. Set `draft: false` when it is ready. A post's filename becomes its URL, for example `/blog/my-post/`.
 
 Plain `.md` files work too. Use `.mdx` when embedding a component. Draft posts are excluded from the homepage, writing index, routes, RSS, and sitemap.
 

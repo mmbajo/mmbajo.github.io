@@ -1,6 +1,7 @@
 ---
 import { render } from 'astro:content';
 import Base from '../../layouts/Base.astro';
+import TableOfContents from '../../components/TableOfContents.astro';
 import { getPosts, formatDate } from '../../lib/posts';
 
 export async function getStaticPaths() {
@@ -8,20 +9,24 @@ export async function getStaticPaths() {
 }
 const { post } = Astro.props;
 const { Content, headings } = await render(post);
-const sections = headings.filter((heading) => heading.depth === 2);
+const sections = headings.filter((heading) => heading.depth === 2 || heading.depth === 3);
 ---
 <Base title={`${post.data.title} — Mark Bajo`} description={post.data.description} article>
-  <article>
+  <article class="blog-post">
     <header class="article-header">
-      <a class="back-link" href="/writing/">← All writing</a>
+      <a class="back-link" href="/blog/">← All posts</a>
       <div class="article-meta"><time datetime={post.data.date.toISOString()}>{formatDate(post.data.date)}</time>{post.data.example && <span>Interactive example</span>}</div>
       <h1>{post.data.title}</h1>
       <p class="article-description">{post.data.description}</p>
       <div class="tags">{post.data.tags.map((tag) => <span>{tag}</span>)}</div>
       {post.data.updated && <p class="updated">Updated {formatDate(post.data.updated)}</p>}
     </header>
-    {sections.length > 1 && <nav class="article-contents" aria-label="In this article"><span>IN THIS NOTE</span>{sections.map((section) => <a href={`#${section.slug}`}>{section.text}</a>)}</nav>}
-    <div class="prose"><Content /></div>
-    <div class="article-end"><a href="/writing/">← Back to writing</a><a href="/rss.xml">Follow via RSS ↗</a></div>
+    <div class="article-layout">
+      <TableOfContents sections={sections} />
+      <div class="article-body" data-reading-content>
+        <div class="prose"><Content /></div>
+        <div class="article-end"><a href="/blog/">← Back to blog</a><a href="/rss.xml">Follow via RSS ↗</a></div>
+      </div>
+    </div>
   </article>
 </Base>
