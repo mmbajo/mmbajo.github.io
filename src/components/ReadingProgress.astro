@@ -3,42 +3,60 @@ import PixelCat from './PixelCat.astro';
 interface Props { article?: boolean }
 const { article = false } = Astro.props;
 ---
-<div class:list={['reading-progress', { 'article-progress': article }]} data-scope={article ? 'article' : 'page'} role="progressbar" aria-label={article ? 'Article reading progress' : 'Page reading progress'} aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" hidden>
+<div class="reading-progress is-paused" data-scope={article ? 'article' : 'page'} data-direction="right" role="progressbar" aria-label={article ? 'Article reading progress' : 'Page reading progress'} aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" hidden>
   <div class="progress-track">
     <div class="progress-fill"></div>
-    <span class="progress-cat" aria-hidden="true">
+  </div>
+  <div class="cat-runway" aria-hidden="true">
+    <span class="progress-cat">
       <PixelCat cat="blue-large" />
       <PixelCat cat="blue-medium" />
       <PixelCat cat="tonkinese" />
     </span>
   </div>
-  {article && <div class="progress-caption" aria-hidden="true"><span>READING</span><span data-progress-percent>00%</span></div>}
 </div>
 
 <script>
   const progress = document.querySelector<HTMLElement>('.reading-progress');
   if (progress) {
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
-    let lastScroll = window.scrollY;
-    let queued = false;
-    let restTimer: ReturnType<typeof setTimeout>;
     const content = progress.dataset.scope === 'article' ? document.querySelector<HTMLElement>('[data-reading-content]') : null;
     const links = [...document.querySelectorAll<HTMLAnchorElement>('[data-toc-link]')];
     const headings = links.map((link) => document.getElementById(decodeURIComponent(link.hash.slice(1))));
     const pack = progress.querySelector<HTMLElement>('.progress-cat')!;
+    const runway = progress.querySelector<HTMLElement>('.cat-runway')!;
+    const meters = [...document.querySelectorAll<HTMLElement>('[data-reading-meter]')];
+    const percentages = [...document.querySelectorAll<HTMLElement>('[data-progress-percent]')];
     const cats = [...pack.querySelectorAll<SVGElement>('.pixel-cat')];
-    // Keep all three together; choose a fresh running order on each page load.
-    for (let i = cats.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [cats[i], cats[j]] = [cats[j], cats[i]];
+    const orderKey = 'mmbajo-cat-order';
+    let savedOrder: unknown;
+    try { savedOrder = JSON.parse(sessionStorage.getItem(orderKey) || 'null'); } catch { /* Storage is optional. */ }
+    if (Array.isArray(savedOrder) && savedOrder.length === cats.length && new Set(savedOrder).size === cats.length && savedOrder.every((id) => cats.some((cat) => cat.dataset.cat === id))) {
+      const order = savedOrder;
+      cats.sort((a, b) => order.indexOf(a.dataset.cat) - order.indexOf(b.dataset.cat));
+    } else {
+      // A fresh order per tab, shared by the homepage and every article.
+      for (let i = cats.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [cats[i], cats[j]] = [cats[j], cats[i]];
+      }
+      try { sessionStorage.setItem(orderKey, JSON.stringify(cats.map((cat) => cat.dataset.cat))); } catch { /* Storage is optional. */ }
     }
     cats.forEach((cat, index) => {
       cat.style.setProperty('--cat-phase', `${index * -80}ms`);
       pack.append(cat);
     });
 
-    const update = () => {
-      queued = false;
+    let frame = 0;
+    let dirty = true;
+    let lastTime = 0;
+    let position: number | undefined;
+    let target = 0;
+    let runwayWidth = 0;
+    let packWidth = 0;
+
+    const measure = () => {
+      dirty = false;
       const bounds = content?.getBoundingClientRect();
       const start = bounds ? Math.max(0, bounds.top + window.scrollY - 100) : 0;
       const end = bounds ? bounds.bottom + window.scrollY - window.innerHeight : document.documentElement.scrollHeight - window.innerHeight;
@@ -47,8 +65,14 @@ const { article = false } = Astro.props;
       progress.hidden = !content && range < 1;
       progress.style.setProperty('--progress', String(fraction));
       progress.setAttribute('aria-valuenow', String(Math.round(fraction * 100)));
-      const percent = progress.querySelector('[data-progress-percent]');
-      if (percent) percent.textContent = `${String(Math.round(fraction * 100)).padStart(2, '0')}%`;
+      percentages.forEach((percent) => { percent.textContent = `${String(Math.round(fraction * 100)).padStart(2, '0')}%`; });
+      meters.forEach((meter) => { meter.hidden = false; meter.style.setProperty('--progress', String(fraction)); });
+      runwayWidth = runway.clientWidth;
+      packWidth = pack.getBoundingClientRect().width;
+      // Both endpoints sit fully beyond the clipped runway, including tails.
+      target = -packWidth - 8 + fraction * (runwayWidth + packWidth + 16);
+      position ??= -packWidth - 8;
+      if (range < 1 || progress.hidden) position = target;
       let active = 0;
       headings.forEach((heading, index) => { if (heading && heading.getBoundingClientRect().top <= 160) active = index; });
       if (fraction === 1) active = links.length - 1;
@@ -57,24 +81,60 @@ const { article = false } = Astro.props;
         else link.removeAttribute('aria-current');
       });
     };
-    const schedule = () => {
-      if (!queued) { queued = true; requestAnimationFrame(update); }
+    const setState = (moving: boolean) => {
+      const visible = position !== undefined && position + packWidth > 0 && position < runwayWidth;
+      const paused = document.hidden || reducedMotion.matches || progress.hidden || !visible;
+      progress.classList.toggle('is-paused', paused);
+      progress.classList.toggle('is-walking', !paused && moving);
+      progress.classList.toggle('is-idle', !paused && !moving);
     };
-    window.addEventListener('scroll', () => {
-      const delta = window.scrollY - lastScroll;
-      if (Math.abs(delta) > 0.5) {
-        progress.dataset.direction = delta < 0 ? 'left' : 'right';
-        if (!reducedMotion.matches) progress.classList.add('is-walking');
-        clearTimeout(restTimer);
-        restTimer = setTimeout(() => progress.classList.remove('is-walking'), 160);
+    const tick = (now: number) => {
+      frame = 0;
+      if (dirty) measure();
+      const current = position!;
+      const difference = target - current;
+      const elapsed = lastTime ? Math.min(now - lastTime, 64) : 16;
+      lastTime = now;
+      if (Math.abs(difference) > 0.35) progress.dataset.direction = difference < 0 ? 'left' : 'right';
+      if (reducedMotion.matches || Math.abs(difference) < 0.35) position = target;
+      else {
+        let next = current + difference * (1 - Math.exp(-elapsed / 75));
+        // Cross each edge at a readable pace, even after a big scroll jump.
+        const edgeStep = elapsed * 0.28;
+        const rightEdge = runwayWidth - packWidth;
+        if (difference > 0) {
+          if (current < 0) next = Math.min(next, current + edgeStep);
+          else if (next > rightEdge) next = Math.min(next, Math.max(current, rightEdge) + edgeStep);
+        } else {
+          if (current > rightEdge) next = Math.max(next, current - edgeStep);
+          else if (next < 0) next = Math.max(next, Math.min(current, 0) - edgeStep);
+        }
+        position = next;
       }
-      lastScroll = window.scrollY;
-      schedule();
-    }, { passive: true });
+      pack.style.transform = `translate3d(${Math.round(position!)}px, 0, 0)`;
+      const moving = Math.abs(target - position!) >= 0.35;
+      setState(moving);
+      if (moving && !document.hidden) frame = requestAnimationFrame(tick);
+      else lastTime = 0;
+    };
+    const schedule = () => {
+      dirty = true;
+      if (!frame && !document.hidden) frame = requestAnimationFrame(tick);
+    };
+    const pause = () => {
+      cancelAnimationFrame(frame);
+      frame = 0;
+      lastTime = 0;
+      progress.classList.add('is-paused');
+      progress.classList.remove('is-walking', 'is-idle');
+    };
+    window.addEventListener('scroll', schedule, { passive: true });
     window.addEventListener('resize', schedule);
     window.addEventListener('pageshow', schedule);
-    reducedMotion.addEventListener('change', () => progress.classList.remove('is-walking'));
+    window.addEventListener('pagehide', pause);
+    document.addEventListener('visibilitychange', () => { if (document.hidden) pause(); else schedule(); });
+    reducedMotion.addEventListener('change', schedule);
     new ResizeObserver(schedule).observe(document.body);
-    update();
+    schedule();
   }
 </script>

@@ -1,4 +1,22 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, type Locator } from '@playwright/test';
+
+async function catPositions(progress: Locator) {
+  return progress.evaluate((element) => {
+    const runway = element.querySelector('.cat-runway')!.getBoundingClientRect();
+    return [...element.querySelectorAll('.pixel-cat')].map((cat) => {
+      const bounds = cat.getBoundingClientRect();
+      return {
+        before: bounds.right <= runway.left,
+        after: bounds.left >= runway.right,
+        visible: bounds.right > runway.left && bounds.left < runway.right,
+      };
+    });
+  });
+}
+
+async function expectCatsOutside(progress: Locator, side: 'before' | 'after') {
+  await expect.poll(async () => (await catPositions(progress)).every((cat) => cat[side])).toBeTruthy();
+}
 
 test('demo assets only load on demand; agent playback, controls, and teardown work', async ({ page }) => {
   const demoRequests: string[] = [];
@@ -139,30 +157,98 @@ test('theme toggle fits narrow mobile screens', async ({ page }) => {
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBeTruthy();
 });
 
-test('article contents track section jumps and all three cats fit at both ends of the progress bar', async ({ page }) => {
+test('homepage cats enter, idle, turn back, and leave the frame one by one', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
-  await page.goto('/blog/a-tiny-world-for-q-learning/');
+  await page.goto('/');
+  const progress = page.getByRole('progressbar', { name: 'Page reading progress' });
+  await expect(progress).toHaveAttribute('aria-valuenow', '0');
+  await expectCatsOutside(progress, 'before');
+  await expect(progress).toHaveClass(/is-paused/);
+
+  await page.evaluate(() => window.scrollTo(0, (document.documentElement.scrollHeight - window.innerHeight) * 0.5));
+  await expect.poll(async () => (await catPositions(progress)).filter((cat) => cat.visible).length).toBe(3);
+  await expect(progress).toHaveClass(/is-idle/);
+  await expect(progress).not.toHaveClass(/is-paused/);
+  const idleAnimations = await progress.locator('.cat-torso, .cat-tail, .cat-blink').evaluateAll((nodes) => nodes.map((node) => getComputedStyle(node).animationName));
+  expect(idleAnimations.some((animation) => animation !== 'none')).toBeTruthy();
+
+  await page.evaluate(() => window.scrollBy(0, -100));
+  await expect(progress).toHaveAttribute('data-direction', 'left');
+  await expect(progress).toHaveClass(/is-idle/);
+
+  // Sample actual clipped visibility throughout the animated exit, including the
+  // intermediate two-cat and one-cat states instead of relying on fixed sleeps.
+  const exitCounts = await progress.evaluate((element) => new Promise<number[]>((resolve) => {
+    const runway = element.querySelector('.cat-runway')!;
+    const cats = [...element.querySelectorAll('.pixel-cat')];
+    const counts: number[] = [];
+    const start = performance.now();
+    window.scrollTo(0, document.documentElement.scrollHeight);
+    const sample = (now: number) => {
+      const frame = runway.getBoundingClientRect();
+      const bounds = cats.map((cat) => cat.getBoundingClientRect());
+      const visible = bounds.filter((cat) => cat.right > frame.left && cat.left < frame.right).length;
+      if (counts.at(-1) !== visible) counts.push(visible);
+      if (bounds.every((cat) => cat.left >= frame.right) || now - start > 3000) resolve(counts);
+      else requestAnimationFrame(sample);
+    };
+    requestAnimationFrame(sample);
+  }));
+  expect(exitCounts).toEqual([3, 2, 1, 0]);
+  await expect(progress).toHaveAttribute('aria-valuenow', '100');
+  await expect(progress).toHaveAttribute('data-direction', 'right');
+  await expectCatsOutside(progress, 'after');
+  await expect(progress).toHaveClass(/is-paused/);
+
+  await page.evaluate(() => window.scrollTo(0, (document.documentElement.scrollHeight - window.innerHeight) * 0.5));
+  await expect(progress).toHaveAttribute('data-direction', 'left');
+  await expect.poll(async () => (await catPositions(progress)).filter((cat) => cat.visible).length).toBe(3);
+  await page.evaluate(() => window.scrollTo(0, 0));
+  await expectCatsOutside(progress, 'before');
+  await expect(progress).not.toHaveClass(/is-walking/);
+});
+
+test('article cats share the full-width top bar and session order while contents track reading', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto('/');
+  const homeProgress = page.getByRole('progressbar', { name: 'Page reading progress' });
+  await expect(homeProgress).toBeVisible();
+  const order = await homeProgress.locator('.pixel-cat').evaluateAll((nodes) => nodes.map((node) => node.getAttribute('data-cat')));
+  expect(await page.evaluate(() => sessionStorage.getItem('mmbajo-cat-order'))).toBeTruthy();
+  await page.getByRole('navigation', { name: 'Main navigation' }).getByRole('link', { name: 'Blog', exact: true }).click();
+  await page.getByRole('link', { name: /A tiny world for Q-learning/ }).click();
   const progress = page.getByRole('progressbar', { name: 'Article reading progress' });
   const toc = page.getByRole('navigation', { name: 'In this article' });
+  await expect(page.getByRole('progressbar')).toHaveCount(1);
+  await expect(progress).toHaveCSS('position', 'fixed');
+  expect(await progress.evaluate((element) => {
+    const bounds = element.getBoundingClientRect();
+    return bounds.left === 0 && bounds.top === 0 && Math.abs(bounds.width - window.innerWidth) < 1;
+  })).toBeTruthy();
+  await expect(page.locator('.article-sidebar .pixel-cat')).toHaveCount(0);
+  await expect(page.locator('[data-reading-meter]')).toHaveCount(1);
   await expect(progress).toHaveAttribute('aria-valuenow', '0');
   const cats = progress.locator('.pixel-cat');
   await expect(cats).toHaveCount(3);
+  expect(await cats.evaluateAll((nodes) => nodes.map((node) => node.getAttribute('data-cat')))).toEqual(order);
   expect(await cats.evaluateAll((nodes) => nodes.map((node) => Number(node.getAttribute('data-weight'))).sort((a, b) => a - b))).toEqual([3.5, 5, 6]);
-  for (const cat of await cats.all()) await expect(cat).toBeInViewport();
+  await expectCatsOutside(progress, 'before');
   const link = toc.getByRole('link', { name: 'What the agent learns' });
   await link.click();
   await expect(link).toHaveAttribute('aria-current', 'location');
   await expect(page).toHaveURL(/#what-the-agent-learns$/);
   await expect.poll(() => progress.getAttribute('aria-valuenow')).not.toBe('0');
+  await expect.poll(async () => (await catPositions(progress)).filter((cat) => cat.visible).length).toBe(3);
   await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
   await expect(progress).toHaveAttribute('aria-valuenow', '100');
+  await expect(page.locator('[data-progress-percent]')).toHaveText('100%');
   await expect(toc.locator('a').last()).toHaveAttribute('aria-current', 'location');
-  await expect(progress.locator('.progress-cat')).toBeInViewport();
-  for (const cat of await cats.all()) await expect(cat).toBeInViewport();
+  await expectCatsOutside(progress, 'after');
   await expect(progress).toHaveAttribute('data-direction', 'right');
   await page.evaluate(() => window.scrollTo(0, 0));
   await expect(progress).toHaveAttribute('aria-valuenow', '0');
   await expect(progress).toHaveAttribute('data-direction', 'left');
+  await expectCatsOutside(progress, 'before');
   await expect(progress).not.toHaveClass(/is-walking/);
 });
 
@@ -178,7 +264,8 @@ test('mobile contents collapse after navigation and reduced motion stops cat ani
   await toc.getByRole('link', { name: 'What the agent learns' }).click();
   await expect(toggle).toHaveAttribute('aria-expanded', 'false');
   await expect(page.locator('#what-the-agent-learns')).toBeInViewport();
-  for (const pose of await page.locator('.cat-pose').all()) await expect(pose).toHaveCSS('animation-name', 'none');
+  await expect(page.getByRole('progressbar', { name: 'Article reading progress' })).toHaveClass(/is-paused/);
+  for (const part of await page.locator('.pixel-cat, .pixel-cat *').all()) await expect(part).toHaveCSS('animation-name', 'none');
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBeTruthy();
 });
 

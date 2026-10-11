@@ -53,22 +53,15 @@
   .education-list li:last-child { padding-bottom: 0; }
   .education-list li::before { content: ''; position: absolute; width: 5px; height: 5px; left: -3px; top: 9px; background: var(--accent); }
   .education-list p { font-size: 11px; color: var(--muted); margin-top: 4px; }
-  .reading-progress { --progress: 0; position: fixed; inset: 0 0 auto; height: 30px; z-index: 40; background: var(--paper); pointer-events: none; }
+  .reading-progress { --progress: 0; position: fixed; inset: 0 0 auto; height: 36px; z-index: 40; background: var(--paper); pointer-events: none; }
   .progress-track { position: absolute; left: 18px; right: 18px; bottom: 0; height: 2px; background: var(--line); }
   .progress-fill { height: 100%; background: var(--accent); transform: scaleX(var(--progress)); transform-origin: left; }
-  .progress-cat { --pack-width: 112px; position: absolute; left: calc(var(--progress) * (100% - var(--pack-width))); bottom: 2px; width: var(--pack-width); height: 24px; display: flex; align-items: end; gap: 5px; }
-  .pixel-cat { display: block; flex: none; image-rendering: pixelated; overflow: visible; }
-  [data-direction="left"] .pixel-cat { transform: scaleX(-1); }
-  .cat-legs-b { opacity: 0; }
-  .is-walking .cat-pose { animation: cat-bob var(--cat-stride) steps(1) infinite; animation-delay: var(--cat-phase); }
-  .is-walking .cat-legs-a { animation: cat-stride var(--cat-stride) steps(1) infinite; animation-delay: var(--cat-phase); }
-  .is-walking .cat-legs-b { animation: cat-stride var(--cat-stride) steps(1) infinite; animation-delay: calc(var(--cat-phase) - var(--cat-half-stride)); }
-  @keyframes cat-bob { 50% { transform: translateY(-1px); } }
-  @keyframes cat-stride { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+  .cat-runway { position: absolute; inset: 0 0 2px; overflow: hidden; }
+  .progress-cat { position: absolute; left: 0; bottom: 0; width: max-content; height: 26px; display: flex; align-items: end; gap: 5px; transform: translate3d(calc(-100% - 8px), 0, 0); }
   .article-layout { display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 56px; align-items: start; }
   .article-body { min-width: 0; }
   .article-sidebar { align-self: stretch; }
-  .article-sidebar-inner { position: sticky; top: 36px; max-height: calc(100vh - 72px); overflow-y: auto; padding-top: 18px; }
+  .article-sidebar-inner { position: sticky; top: 56px; max-height: calc(100vh - 96px); overflow-y: auto; padding-top: 18px; }
   .toc-heading { margin-bottom: 18px; }
   .article-contents { display: flex; flex-direction: column; gap: 12px; }
   .article-contents a { display: flex; align-items: baseline; gap: 8px; color: var(--muted); text-decoration: none; font-size: 11px; line-height: 1.6; }
@@ -78,14 +71,13 @@
   .article-contents a.toc-subheading { padding-left: 15px; font-size: 10px; }
   .toc-toggle { width: 100%; display: flex; justify-content: space-between; align-items: center; color: var(--ink); background: transparent; border: 0; padding: 5px 0; font-size: 12px; text-align: left; }
   .toc-toggle[aria-expanded="true"] > span { transform: rotate(45deg); }
-  .article-progress { position: relative; inset: auto; height: 65px; margin-top: 24px; z-index: auto; background: transparent; }
-  .article-progress .progress-track { left: 17px; right: 17px; bottom: 22px; height: 6px; background: repeating-linear-gradient(to right, var(--line) 0 3px, transparent 3px 5px); }
-  .article-progress .progress-fill { width: calc(var(--progress) * 100%); transform: none; background: repeating-linear-gradient(to right, var(--accent) 0 3px, transparent 3px 5px); }
-  .article-progress .progress-cat { bottom: 7px; }
+  .toc-reading-progress { --progress: 0; position: relative; height: 28px; margin-top: 24px; }
+  .toc-progress-track { height: 6px; background: repeating-linear-gradient(to right, var(--line) 0 3px, transparent 3px 5px); }
+  .toc-progress-fill { height: 100%; width: calc(var(--progress) * 100%); background: repeating-linear-gradient(to right, var(--accent) 0 3px, transparent 3px 5px); }
   .progress-caption { display: flex; justify-content: space-between; position: absolute; inset: auto 0 0; font-size: 9px; letter-spacing: .06em; color: var(--muted); }
   [data-progress-percent] { color: var(--accent); font-variant-numeric: tabular-nums; }
   .site-shell { max-width: 900px; padding: 28px 40px 0; margin: 0 auto; }
-  .article-shell { max-width: 1180px; padding-top: 0; }
+  .article-shell { max-width: 1180px; }
   .site-header { display: flex; justify-content: space-between; align-items: center; padding: 32px 0 25px; border-bottom: 1px solid var(--line); gap: 24px; }
   .wordmark { display: inline-flex; align-items: center; gap: 11px; text-decoration: none; color: var(--ink); font-size: 15px; font-weight: 600; white-space: nowrap; }
   .site-header nav { display: flex; align-items: center; gap: 24px; font-size: 12px; }
@@ -178,18 +170,17 @@
   @media (max-width: 900px) {
     .article-header { margin-left: 0; }
     .article-layout { display: block; }
-    .article-sidebar { position: sticky; top: 0; z-index: 20; background: var(--paper); border-block: 1px solid var(--line); margin-bottom: 25px; }
+    .article-sidebar { position: sticky; top: 36px; z-index: 20; background: var(--paper); border-block: 1px solid var(--line); margin-bottom: 25px; }
     .article-sidebar-inner { position: static; max-height: none; overflow: visible; padding: 8px 0; }
     .toc-heading { margin: 0; }
     .toc-heading:has(.toc-toggle:not([hidden])) > p { display: none; }
     .article-contents { max-height: 45vh; overflow-y: auto; padding: 15px 0; }
-    .article-progress { height: 48px; margin-top: 5px; }
-    .article-progress .progress-track { bottom: 16px; }
+    .toc-reading-progress { height: 22px; margin-top: 8px; }
+    .toc-progress-track { height: 3px; }
     .progress-caption { font-size: 8px; }
   }
   @media (max-width: 650px) {
     .site-shell { padding: 25px 22px 0; }
-    .article-shell { padding-top: 0; }
     .site-header { padding: 23px 0; gap: 15px; }
     .site-header nav { gap: 14px; font-size: 12px; }
     .github-nav { display: none; }

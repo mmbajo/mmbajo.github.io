@@ -1,0 +1,99 @@
+@layer components {
+  .pixel-cat {
+    display: block;
+    flex: none;
+    image-rendering: pixelated;
+    overflow: visible;
+  }
+
+  .reading-progress[data-direction='left'] .pixel-cat { transform: scaleX(-1); }
+  .cat-run-legs, .cat-blink { display: none; }
+  .cat-torso { transform-origin: 18px 16px; }
+  .cat-tail { transform-origin: 8px 13px; }
+  .cat-head { transform-origin: 23px 14px; }
+  .cat-ear { transform-origin: 23px 7px; }
+
+  .reading-progress.is-walking .cat-rest-legs { display: none; }
+  .reading-progress.is-walking .cat-run-legs { display: block; }
+  .reading-progress.is-walking .cat-pose {
+    animation: cat-bound var(--cat-stride) steps(1, end) infinite;
+    animation-delay: var(--cat-phase, 0ms);
+  }
+  .reading-progress.is-walking .cat-gait-frame {
+    animation: cat-gait var(--cat-stride) steps(1, end) infinite;
+    animation-delay: calc(var(--cat-phase, 0ms) - var(--cat-stride) * var(--gait-offset));
+  }
+  .reading-progress.is-walking .cat-tail {
+    animation: cat-running-tail var(--cat-stride) steps(1, end) infinite;
+    animation-delay: var(--cat-phase, 0ms);
+  }
+  .reading-progress.is-walking .cat-head {
+    animation: cat-running-head var(--cat-stride) steps(1, end) infinite;
+    animation-delay: var(--cat-phase, 0ms);
+  }
+
+  .reading-progress.is-idle .cat-torso {
+    animation: cat-breathe 2.8s ease-in-out infinite;
+    animation-delay: var(--cat-phase, 0ms);
+  }
+  .reading-progress.is-idle .cat-tail {
+    animation: cat-tail-flick var(--cat-idle-speed) steps(2, end) infinite;
+    animation-delay: var(--cat-phase, 0ms);
+  }
+  .reading-progress.is-idle .cat-ear {
+    animation: cat-ear-twitch var(--cat-idle-speed) steps(1, end) infinite;
+    animation-delay: var(--cat-phase, 0ms);
+  }
+  .reading-progress.is-idle .cat-blink {
+    display: block;
+    animation: cat-blink var(--cat-blink-speed) steps(1, end) infinite;
+    animation-delay: var(--cat-phase, 0ms);
+  }
+
+  /* Stop animation work while the page or cats are out of view. */
+  .reading-progress.is-paused .pixel-cat *,
+  .reading-progress.is-paused .pixel-cat { animation-play-state: paused !important; }
+
+  @keyframes cat-bound {
+    0%, 75%, 100% { transform: translateY(0); }
+    25% { transform: translateY(-1px); }
+    50% { transform: translateY(-2px); }
+  }
+  @keyframes cat-gait {
+    0%, 24.99% { opacity: 1; }
+    25%, 100% { opacity: 0; }
+  }
+  @keyframes cat-running-tail {
+    0%, 100% { transform: rotate(-8deg); }
+    25% { transform: rotate(0); }
+    50% { transform: rotate(9deg); }
+    75% { transform: rotate(0); }
+  }
+  @keyframes cat-running-head {
+    0%, 75%, 100% { transform: translateY(0); }
+    25%, 50% { transform: translateY(1px); }
+  }
+  @keyframes cat-breathe {
+    0%, 100% { transform: scaleY(1); }
+    50% { transform: scaleY(1.035); }
+  }
+  @keyframes cat-tail-flick {
+    0%, 54%, 76%, 100% { transform: rotate(0); }
+    60%, 70% { transform: rotate(-13deg); }
+    65% { transform: rotate(10deg); }
+  }
+  @keyframes cat-ear-twitch {
+    0%, 35%, 43%, 100% { transform: rotate(0); }
+    37%, 40% { transform: rotate(-12deg); }
+  }
+  @keyframes cat-blink {
+    0%, 68%, 73%, 78%, 100% { opacity: 0; }
+    70%, 72%, 76%, 77% { opacity: 1; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .reading-progress .pixel-cat * { animation: none !important; }
+    .reading-progress .cat-run-legs, .reading-progress .cat-blink { display: none !important; }
+    .reading-progress .cat-rest-legs { display: block !important; }
+  }
+}

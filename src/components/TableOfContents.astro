@@ -1,5 +1,4 @@
 ---
-import ReadingProgress from './ReadingProgress.astro';
 interface Props { sections: { slug: string; text: string; depth: number }[] }
 const { sections } = Astro.props;
 ---
@@ -9,7 +8,10 @@ const { sections } = Astro.props;
     <nav id="article-toc" class="article-contents" aria-label="In this article">
       {sections.map((section) => <a data-toc-link class:list={{ 'toc-subheading': section.depth === 3 }} href={`#${section.slug}`}><span aria-hidden="true">└</span>{section.text}</a>)}
     </nav>
-    <ReadingProgress article />
+    <div class="toc-reading-progress" data-reading-meter aria-hidden="true" hidden>
+      <div class="toc-progress-track"><div class="toc-progress-fill"></div></div>
+      <div class="progress-caption"><span>READING</span><span data-progress-percent>00%</span></div>
+    </div>
   </div>
 </aside>
 

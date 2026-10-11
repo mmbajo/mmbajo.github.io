@@ -7,7 +7,8 @@ A small static Astro site for writing and playable reinforcement learning experi
 - A complete example: tabular Q-learning in a maze, with policy checkpoints, exploration, keyboard/touch controls, and fullscreen.
 - A light/dark toggle that starts with the reader's system theme and remembers their choice locally. The preview, code blocks, and running demo follow the selected theme.
 - A monospace personal homepage with a local copy of the `mmbajo` GitHub avatar, and a blog at `/blog/`. Old `/writing/` links redirect to their new locations.
-- Blog posts have a sticky contents tree, active section tracking, and three pixel cats running along the reading-progress bar: two Russian Blues (6 kg and 5 kg) and a Tonkinese (3.5 kg). Their sizes and coats differ, their running order is shuffled on each page load, and reduced-motion preferences disable the animation.
+- Every page shares a full-width reading-progress bar at the top, with three pixel cats: two Russian Blues (6 kg and 5 kg) and a Tonkinese (3.5 kg). They start offscreen, enter as you scroll, and leave the frame one by one at the end. They turn when you scroll back and breathe, blink, and move their tails while resting. Their sizes and coats differ; their running order is shuffled once per tab and stays the same between pages. Animations pause when the cats are offscreen or the tab is hidden, and reduced-motion preferences disable them.
+- Blog posts also have a sticky contents tree, active section tracking, and a small reading meter alongside the article.
 - System fonts and local assets. No React runtime, external fonts, analytics, database, or application server.
 
 ## Run locally
@@ -28,7 +29,7 @@ npm run build
 npm run preview
 ```
 
-The browser tests check lazy loading, agent playback, keyboard/touch controls, mobile layout, theme persistence and demo synchronization, routes, feeds, and reading without JavaScript:
+The browser tests check lazy loading, agent playback, keyboard/touch controls, mobile layout, theme persistence and demo synchronization, routes, feeds, reading without JavaScript, and the cats' entry, staged exit, idle behavior, direction, session order, and reduced-motion support:
 
 ```sh
 npx playwright install chromium
@@ -45,8 +46,9 @@ On macOS, tests use an installed Google Chrome when available. In CI, Playwright
 - `src/styles/global.css`: colors, typography, and layout.
 - `public/favicon.svg`: the small grid icon.
 - `public/images/avatar.png`: the GitHub profile image, saved locally to avoid a third-party image request. Replace it here after changing your GitHub avatar.
-- `src/components/ReadingProgress.astro` and `TableOfContents.astro`: the cat, reading progress, and automatic navigation generated from article headings.
+- `src/components/ReadingProgress.astro` and `TableOfContents.astro`: the shared top bar, cats' movement and session order, sidebar reading meter, and automatic navigation generated from article headings.
 - `src/components/PixelCat.astro`: the three cats' pixel art, sizes, colors, and individual running cadence.
+- `src/styles/cats.css`: running poses and idle animations.
 
 The Q-learning article and demo are explicitly marked as an introductory example, not a claim about original research. Keep them, edit them, or replace them with your first experiment.
 

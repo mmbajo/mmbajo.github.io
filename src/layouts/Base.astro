@@ -33,7 +33,7 @@ const active = Astro.url.pathname;
     <meta name="twitter:card" content="summary" />
   </head>
   <body>
-    {!article && <ReadingProgress />}
+    <ReadingProgress article={article} />
     <a class="skip-link" href="#main">Skip to content</a>
     <div class:list={['site-shell', { 'article-shell': article }]}>
       <header class="site-header">
