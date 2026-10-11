@@ -1,58 +1,72 @@
+/* Repeated in every stylesheet: whichever file the bundler puts first has to
+   establish the order, or reset and base end up overriding components. */
+@layer reset, base, components;
+
 @layer components {
   .pixel-cat {
     display: block;
     flex: none;
     image-rendering: pixelated;
     overflow: visible;
+    /* Position and facing are written by ReadingProgress as one transform. */
+    will-change: transform;
   }
 
-  .reading-progress[data-direction='left'] .pixel-cat { transform: scaleX(-1); }
   .cat-run-legs, .cat-blink { display: none; }
   .cat-torso { transform-origin: 18px 16px; }
   .cat-tail { transform-origin: 8px 13px; }
   .cat-head { transform-origin: 23px 14px; }
   .cat-ear { transform-origin: 23px 7px; }
 
-  .reading-progress.is-walking .cat-rest-legs { display: none; }
-  .reading-progress.is-walking .cat-run-legs { display: block; }
-  .reading-progress.is-walking .cat-pose {
+  /* ---------- running ---------- */
+  .pixel-cat.is-walking .cat-rest-legs { display: none; }
+  .pixel-cat.is-walking .cat-run-legs { display: block; }
+  .pixel-cat.is-walking .cat-pose {
     animation: cat-bound var(--cat-stride) steps(1, end) infinite;
     animation-delay: var(--cat-phase, 0ms);
   }
-  .reading-progress.is-walking .cat-gait-frame {
+  .pixel-cat.is-walking .cat-gait-frame {
     animation: cat-gait var(--cat-stride) steps(1, end) infinite;
     animation-delay: calc(var(--cat-phase, 0ms) - var(--cat-stride) * var(--gait-offset));
   }
-  .reading-progress.is-walking .cat-tail {
+  .pixel-cat.is-walking .cat-tail {
     animation: cat-running-tail var(--cat-stride) steps(1, end) infinite;
     animation-delay: var(--cat-phase, 0ms);
   }
-  .reading-progress.is-walking .cat-head {
+  .pixel-cat.is-walking .cat-head {
     animation: cat-running-head var(--cat-stride) steps(1, end) infinite;
     animation-delay: var(--cat-phase, 0ms);
   }
 
-  .reading-progress.is-idle .cat-torso {
+  /* ---------- resting ---------- */
+  .pixel-cat.is-idle .cat-torso {
     animation: cat-breathe 2.8s ease-in-out infinite;
     animation-delay: var(--cat-phase, 0ms);
   }
-  .reading-progress.is-idle .cat-tail {
-    animation: cat-tail-flick var(--cat-idle-speed) steps(2, end) infinite;
+  .pixel-cat.is-idle .cat-tail {
+    animation: cat-tail-idle var(--cat-idle-speed) steps(1, end) infinite;
     animation-delay: var(--cat-phase, 0ms);
   }
-  .reading-progress.is-idle .cat-ear {
+  .pixel-cat.is-idle .cat-head {
+    animation: cat-look-around calc(var(--cat-idle-speed) * 2.1) steps(1, end) infinite;
+    animation-delay: var(--cat-phase, 0ms);
+  }
+  .pixel-cat.is-idle .cat-ear {
     animation: cat-ear-twitch var(--cat-idle-speed) steps(1, end) infinite;
     animation-delay: var(--cat-phase, 0ms);
   }
-  .reading-progress.is-idle .cat-blink {
+  .pixel-cat.is-idle .cat-blink {
     display: block;
     animation: cat-blink var(--cat-blink-speed) steps(1, end) infinite;
     animation-delay: var(--cat-phase, 0ms);
   }
 
+  /* A turn swishes the tail once. Listed last so it wins over the state above. */
+  .pixel-cat.is-turning .cat-tail { animation: cat-turn-swish 380ms steps(1, end) 1; }
+
   /* Stop animation work while the page or cats are out of view. */
-  .reading-progress.is-paused .pixel-cat *,
-  .reading-progress.is-paused .pixel-cat { animation-play-state: paused !important; }
+  .reading-progress.is-paused .pixel-cat,
+  .reading-progress.is-paused .pixel-cat * { animation-play-state: paused !important; }
 
   @keyframes cat-bound {
     0%, 75%, 100% { transform: translateY(0); }
@@ -77,10 +91,30 @@
     0%, 100% { transform: scaleY(1); }
     50% { transform: scaleY(1.035); }
   }
-  @keyframes cat-tail-flick {
-    0%, 54%, 76%, 100% { transform: rotate(0); }
-    60%, 70% { transform: rotate(-13deg); }
-    65% { transform: rotate(10deg); }
+  /* A slow sway so a resting cat is never frozen, then an occasional flick. */
+  @keyframes cat-tail-idle {
+    0%, 100% { transform: rotate(-3deg); }
+    12% { transform: rotate(0); }
+    24% { transform: rotate(3deg); }
+    36% { transform: rotate(1deg); }
+    48% { transform: rotate(-2deg); }
+    58% { transform: rotate(-13deg); }
+    63% { transform: rotate(10deg); }
+    68% { transform: rotate(-11deg); }
+    73% { transform: rotate(4deg); }
+    80% { transform: rotate(-1deg); }
+  }
+  @keyframes cat-turn-swish {
+    0% { transform: rotate(14deg); }
+    30% { transform: rotate(-10deg); }
+    60% { transform: rotate(6deg); }
+    100% { transform: rotate(0); }
+  }
+  @keyframes cat-look-around {
+    0%, 41%, 100% { transform: rotate(0); }
+    44%, 50% { transform: rotate(-7deg) translateY(-1px); }
+    53% { transform: rotate(0); }
+    82%, 87% { transform: rotate(5deg); }
   }
   @keyframes cat-ear-twitch {
     0%, 35%, 43%, 100% { transform: rotate(0); }
@@ -92,6 +126,7 @@
   }
 
   @media (prefers-reduced-motion: reduce) {
+    .reading-progress .pixel-cat,
     .reading-progress .pixel-cat * { animation: none !important; }
     .reading-progress .cat-run-legs, .reading-progress .cat-blink { display: none !important; }
     .reading-progress .cat-rest-legs { display: block !important; }

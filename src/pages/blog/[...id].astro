@@ -11,7 +11,8 @@ const { post } = Astro.props;
 const { Content, headings } = await render(post);
 const sections = headings.filter((heading) => heading.depth === 2 || heading.depth === 3);
 ---
-<Base title={`${post.data.title} — Mark Bajo`} description={post.data.description} article>
+<Base title={`${post.data.title} — Mark Bajo`} description={post.data.description} article
+  ogImage={`/og/${post.id}.png`} published={post.data.date} modified={post.data.updated}>
   <article class="blog-post">
     <header class="article-header">
       <a class="back-link" href="/blog/">← All posts</a>

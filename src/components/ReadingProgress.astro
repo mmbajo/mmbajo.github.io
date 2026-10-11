@@ -8,11 +8,9 @@ const { article = false } = Astro.props;
     <div class="progress-fill"></div>
   </div>
   <div class="cat-runway" aria-hidden="true">
-    <span class="progress-cat">
-      <PixelCat cat="blue-large" />
-      <PixelCat cat="blue-medium" />
-      <PixelCat cat="tonkinese" />
-    </span>
+    <PixelCat cat="blue-large" />
+    <PixelCat cat="blue-medium" />
+    <PixelCat cat="tonkinese" />
   </div>
 </div>
 
@@ -23,11 +21,10 @@ const { article = false } = Astro.props;
     const content = progress.dataset.scope === 'article' ? document.querySelector<HTMLElement>('[data-reading-content]') : null;
     const links = [...document.querySelectorAll<HTMLAnchorElement>('[data-toc-link]')];
     const headings = links.map((link) => document.getElementById(decodeURIComponent(link.hash.slice(1))));
-    const pack = progress.querySelector<HTMLElement>('.progress-cat')!;
     const runway = progress.querySelector<HTMLElement>('.cat-runway')!;
     const meters = [...document.querySelectorAll<HTMLElement>('[data-reading-meter]')];
     const percentages = [...document.querySelectorAll<HTMLElement>('[data-progress-percent]')];
-    const cats = [...pack.querySelectorAll<SVGElement>('.pixel-cat')];
+    const cats = [...runway.querySelectorAll<SVGElement>('.pixel-cat')];
     const orderKey = 'mmbajo-cat-order';
     let savedOrder: unknown;
     try { savedOrder = JSON.parse(sessionStorage.getItem(orderKey) || 'null'); } catch { /* Storage is optional. */ }
@@ -42,18 +39,38 @@ const { article = false } = Astro.props;
       }
       try { sessionStorage.setItem(orderKey, JSON.stringify(cats.map((cat) => cat.dataset.cat))); } catch { /* Storage is optional. */ }
     }
-    cats.forEach((cat, index) => {
+
+    const GAP = 7;
+    const MAX_LAG = 26;
+    // The pack tracks the scroll; each cat then follows its own slot in the pack
+    // with a weight-dependent lag. The line gives and gathers as the scroll speed
+    // changes, which is what makes it read as three animals instead of one sprite.
+    const members = cats.map((cat, index) => {
       cat.style.setProperty('--cat-phase', `${index * -80}ms`);
-      pack.append(cat);
+      runway.append(cat);
+      const weight = Number(cat.dataset.weight) || 4;
+      return {
+        cat,
+        width: Number(cat.getAttribute('width')) || 34,
+        tau: 40 + weight * 22,
+        offset: 0,
+        position: undefined as number | undefined,
+        facing: 1,
+        turnTimer: 0,
+      };
     });
+    let packWidth = -GAP;
+    for (const member of members) {
+      member.offset = packWidth + GAP;
+      packWidth = member.offset + member.width;
+    }
 
     let frame = 0;
     let dirty = true;
     let lastTime = 0;
-    let position: number | undefined;
     let target = 0;
+    let pack: number | undefined;
     let runwayWidth = 0;
-    let packWidth = 0;
 
     const measure = () => {
       dirty = false;
@@ -68,11 +85,14 @@ const { article = false } = Astro.props;
       percentages.forEach((percent) => { percent.textContent = `${String(Math.round(fraction * 100)).padStart(2, '0')}%`; });
       meters.forEach((meter) => { meter.hidden = false; meter.style.setProperty('--progress', String(fraction)); });
       runwayWidth = runway.clientWidth;
-      packWidth = pack.getBoundingClientRect().width;
       // Both endpoints sit fully beyond the clipped runway, including tails.
       target = -packWidth - 8 + fraction * (runwayWidth + packWidth + 16);
-      position ??= -packWidth - 8;
-      if (range < 1 || progress.hidden) position = target;
+      pack ??= -packWidth - 8;
+      if (range < 1 || progress.hidden) pack = target;
+      for (const member of members) {
+        member.position ??= pack + member.offset;
+        if (range < 1 || progress.hidden) member.position = pack + member.offset;
+      }
       let active = 0;
       headings.forEach((heading, index) => { if (heading && heading.getBoundingClientRect().top <= 160) active = index; });
       if (fraction === 1) active = links.length - 1;
@@ -81,25 +101,36 @@ const { article = false } = Astro.props;
         else link.removeAttribute('aria-current');
       });
     };
-    const setState = (moving: boolean) => {
-      const visible = position !== undefined && position + packWidth > 0 && position < runwayWidth;
-      const paused = document.hidden || reducedMotion.matches || progress.hidden || !visible;
+
+    const paint = (member: typeof members[number], moving: boolean) => {
+      const flipped = member.facing < 0 ? ' scaleX(-1)' : '';
+      member.cat.style.transform = `translate3d(${Math.round(member.position!)}px, 0, 0)${flipped}`;
+      const visible = member.position! + member.width > 0 && member.position! < runwayWidth;
+      member.cat.classList.toggle('is-walking', moving && visible);
+      member.cat.classList.toggle('is-idle', !moving && visible);
+    };
+
+    const setState = (moving: boolean, anyVisible: boolean) => {
+      const paused = document.hidden || reducedMotion.matches || progress.hidden || !anyVisible;
       progress.classList.toggle('is-paused', paused);
       progress.classList.toggle('is-walking', !paused && moving);
       progress.classList.toggle('is-idle', !paused && !moving);
     };
+
     const tick = (now: number) => {
       frame = 0;
       if (dirty) measure();
-      const current = position!;
-      const difference = target - current;
       const elapsed = lastTime ? Math.min(now - lastTime, 64) : 16;
       lastTime = now;
+
+      // The pack moves first, crossing each edge at a readable pace even after a
+      // big scroll jump, so the exits stay staged instead of snapping offscreen.
+      const current = pack!;
+      const difference = target - current;
       if (Math.abs(difference) > 0.35) progress.dataset.direction = difference < 0 ? 'left' : 'right';
-      if (reducedMotion.matches || Math.abs(difference) < 0.35) position = target;
+      if (reducedMotion.matches || Math.abs(difference) < 0.35) pack = target;
       else {
         let next = current + difference * (1 - Math.exp(-elapsed / 75));
-        // Cross each edge at a readable pace, even after a big scroll jump.
         const edgeStep = elapsed * 0.28;
         const rightEdge = runwayWidth - packWidth;
         if (difference > 0) {
@@ -109,14 +140,40 @@ const { article = false } = Astro.props;
           if (current > rightEdge) next = Math.max(next, current - edgeStep);
           else if (next < 0) next = Math.max(next, Math.min(current, 0) - edgeStep);
         }
-        position = next;
+        pack = next;
       }
-      pack.style.transform = `translate3d(${Math.round(position!)}px, 0, 0)`;
-      const moving = Math.abs(target - position!) >= 0.35;
-      setState(moving);
+
+      let moving = Math.abs(target - pack!) >= 0.35;
+      let anyVisible = false;
+      for (const member of members) {
+        const goal = pack! + member.offset;
+        const gap = goal - member.position!;
+        if (Math.abs(gap) > 0.35) {
+          const facing = gap < 0 ? -1 : 1;
+          if (facing !== member.facing) {
+            member.facing = facing;
+            // A quick tail swish sells the turn without restarting the gait.
+            member.cat.classList.add('is-turning');
+            clearTimeout(member.turnTimer);
+            member.turnTimer = window.setTimeout(() => member.cat.classList.remove('is-turning'), 380);
+          }
+        }
+        if (reducedMotion.matches || Math.abs(gap) < 0.35) member.position = goal;
+        else {
+          const eased = member.position! + gap * (1 - Math.exp(-elapsed / member.tau));
+          // A cat never falls further behind its slot than about its own length.
+          member.position = Math.max(goal - MAX_LAG, Math.min(goal + MAX_LAG, eased));
+        }
+        const catMoving = Math.abs(goal - member.position!) >= 0.35;
+        moving ||= catMoving;
+        if (member.position! + member.width > 0 && member.position! < runwayWidth) anyVisible = true;
+        paint(member, moving);
+      }
+      setState(moving, anyVisible);
       if (moving && !document.hidden) frame = requestAnimationFrame(tick);
       else lastTime = 0;
     };
+
     const schedule = () => {
       dirty = true;
       if (!frame && !document.hidden) frame = requestAnimationFrame(tick);

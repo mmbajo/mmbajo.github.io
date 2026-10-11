@@ -1,0 +1,20 @@
+---
+import { contactEmail } from '../config';
+---
+{contactEmail && (
+  <span class="email-link" data-email-user={contactEmail.user} data-email-domain={contactEmail.domain}
+    >{contactEmail.user}<span class="at">at</span>{contactEmail.domain}</span>
+)}
+
+<script>
+  // The page ships the address in two pieces, so it is never a plain mailto:
+  // in the HTML. Readers without JavaScript still see "user at domain".
+  for (const node of document.querySelectorAll<HTMLElement>('[data-email-user]')) {
+    const address = `${node.dataset.emailUser}@${node.dataset.emailDomain}`;
+    const link = document.createElement('a');
+    link.className = node.className;
+    link.href = `mailto:${address}`;
+    link.textContent = address;
+    node.replaceWith(link);
+  }
+</script>

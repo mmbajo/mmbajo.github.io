@@ -1,11 +1,15 @@
-// Shared by the live canvas and the generated SVG preview.
+// Single source of truth for the maze colors: the live canvas reads these
+// directly, and scripts/generate-demo-poster.mjs turns them into the inline
+// SVG preview plus src/styles/maze.css. Keys map to --maze-<key> variables.
+// The tones belong to the site's warm paper/ink/gold family so the experiment
+// reads as part of the page rather than a transplant from another palette.
 export const palettes = {
   light: {
-    background: '#f0f2e9', wall: '#a7b393', wallInner: '#93a17f', goal: '#eee0be', cell: '#e2e8d8',
-    path: '#7d9c68', star: '#b98539', agent: '#2e5948', eyes: '#f4f7ec', label: '#68795f',
+    background: '#f2f0e9', cell: '#e7e3d7', wall: '#d3ccb9', wallInner: '#c3bba6', goal: '#ecd9ac',
+    path: '#a98442', star: '#8a5e20', agent: '#3a352c', eyes: '#f7f4ec', label: '#807c73',
   },
   dark: {
-    background: '#20291f', wall: '#536448', wallInner: '#43533b', goal: '#51472b', cell: '#2d3a28',
-    path: '#8dac71', star: '#d5ad67', agent: '#9bc3a6', eyes: '#203b2b', label: '#acbf9f',
+    background: '#1c1a16', cell: '#262219', wall: '#38332a', wallInner: '#2c2820', goal: '#4a3c20',
+    path: '#bb9a5f', star: '#d9b674', agent: '#d6d0c2', eyes: '#1c1a16', label: '#8b867b',
   },
 };

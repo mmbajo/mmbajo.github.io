@@ -1,16 +1,55 @@
 ---
-import { site } from '../config';
+import { site, contactEmail, contactProfiles, sameAs } from '../config';
 import ReadingProgress from '../components/ReadingProgress.astro';
+import EmailLink from '../components/EmailLink.astro';
 import '../styles/global.css';
+import '../styles/maze.css';
 
 interface Props {
   title?: string;
   description?: string;
   article?: boolean;
+  /** Absolute-from-root path of the social preview image. */
+  ogImage?: string;
+  published?: Date;
+  modified?: Date;
 }
-const { title = site.title, description = site.description, article = false } = Astro.props;
+const {
+  title = site.title,
+  description = site.description,
+  article = false,
+  ogImage = '/og/default.png',
+  published,
+  modified,
+} = Astro.props;
+
 const canonical = new URL(Astro.url.pathname, Astro.site);
 const active = Astro.url.pathname;
+const image = new URL(ogImage, Astro.site);
+
+const person = {
+  '@type': 'Person',
+  '@id': `${Astro.site}#person`,
+  name: site.name,
+  alternateName: 'mmbajo',
+  url: String(Astro.site),
+  jobTitle: 'Research Engineer',
+  description: site.description,
+  sameAs,
+};
+const schema = article
+  ? {
+      '@context': 'https://schema.org',
+      '@type': 'BlogPosting',
+      headline: title.replace(` — ${site.name}`, ''),
+      description,
+      url: String(canonical),
+      image: String(image),
+      author: person,
+      ...(published && { datePublished: published.toISOString() }),
+      ...(modified && { dateModified: modified.toISOString() }),
+    }
+  : { '@context': 'https://schema.org', ...person };
 ---
 <!doctype html>
 <html lang="en">
@@ -18,6 +57,8 @@ const active = Astro.url.pathname;
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="color-scheme" content="light dark" />
+    <meta name="theme-color" content="#faf9f6" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#141310" media="(prefers-color-scheme: dark)" />
     <script is:inline src="/theme.js"></script>
     <title>{title}</title>
     <meta name="description" content={description} />
@@ -30,7 +71,18 @@ const active = Astro.url.pathname;
     <meta property="og:description" content={description} />
     <meta property="og:url" content={canonical} />
     <meta property="og:site_name" content={site.name} />
-    <meta name="twitter:card" content="summary" />
+    <meta property="og:locale" content={site.locale} />
+    <meta property="og:image" content={image} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content={`${title} — ${site.name}`} />
+    {published && <meta property="article:published_time" content={published.toISOString()} />}
+    {modified && <meta property="article:modified_time" content={modified.toISOString()} />}
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={image} />
+    <script type="application/ld+json" is:inline set:html={JSON.stringify(schema)} />
   </head>
   <body>
     <ReadingProgress article={article} />
@@ -54,6 +106,8 @@ const active = Astro.url.pathname;
       <footer class="site-footer">
         <span>© {new Date().getFullYear()} {site.name}</span>
         <div>
+          {contactEmail && <EmailLink />}
+          {contactProfiles.map((profile) => <a href={profile.url}>{profile.label} <span aria-hidden="true">↗</span></a>)}
           <a href="/rss.xml">RSS</a>
           <a href={site.github}>GitHub <span aria-hidden="true">↗</span></a>
           <a href={site.repository}>Source <span aria-hidden="true">↗</span></a>

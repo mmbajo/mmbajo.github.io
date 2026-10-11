@@ -1,23 +1,31 @@
 ---
+import defaultPoster from '../assets/gridworld-poster.svg?raw';
+
 interface Props {
   src: string;
   title: string;
+  /** URL of a poster image. Omit to inline `posterSvg`, which follows the site theme. */
   poster?: string;
   posterAlt?: string;
+  /** Raw SVG markup drawn inline, so it can read the page's own theme variables. */
+  posterSvg?: string;
   description?: string;
   height?: number;
 }
 const {
   src, title,
-  poster = '/images/gridworld.svg',
+  poster,
   posterAlt = `Preview of ${title}`,
+  posterSvg = defaultPoster,
   description = 'Watch the agent, or take the controls yourself.',
   height = 610,
 } = Astro.props;
 ---
 <rl-demo data-src={src} data-title={title} style={`--demo-height: ${height}px`}>
   <div class="demo-poster">
-    <img src={poster} alt={posterAlt} width="900" height="420" loading="lazy" />
+    {poster
+      ? <img src={poster} alt={posterAlt} width="900" height="420" loading="lazy" />
+      : <Fragment set:html={posterSvg} />}
     <div class="demo-start-row">
       <div><span class="demo-eyebrow">PLAYABLE EXAMPLE</span><p>{description}</p></div>
       <button type="button" class="button" data-start hidden><span aria-hidden="true">▶</span> Run demo</button>
